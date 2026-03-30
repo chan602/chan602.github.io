@@ -1,1 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nathan Chan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f5f0; --ink: #1a1814; --muted: #7a7570;
+    --accent: #c4622d; --line: #dedad4; --card: #ffffff;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.7; }
 
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 4rem;
+    background: rgba(247,245,240,0.93); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line); z-index: 100;
+    animation: fadeDown 0.6s ease both;
+  }
+  .nav-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
+  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-linkedin {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: var(--ink); color: #fff !important;
+    padding: 0.4rem 0.9rem; border-radius: 2px; font-size: 0.78rem !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important;
+    transition: background 0.2s !important;
+  }
+  .nav-linkedin:hover { background: var(--accent) !important; color: #fff !important; }
+  .nav-linkedin svg { width: 13px; height: 13px; fill: currentColor; }
+
+  /* HERO */
+  #home {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 8rem 4rem 4rem; position: relative; overflow: hidden;
+  }
+  .hero-label { font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 1.5rem; animation: fadeUp 0.7s 0.2s ease both; opacity: 0; }
+  .hero-name { font-family: 'Playfair Display', serif; font-size: clamp(3.5rem, 8vw, 7rem); line-height: 1.05; margin-bottom: 1.5rem; animation: fadeUp 0.7s 0.35s ease both; opacity: 0; }
+  .hero-name span { color: var(--accent); }
+  .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 520px; font-weight: 300; margin-bottom: 1rem; animation: fadeUp 0.7s 0.5s ease both; opacity: 0; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; animation: fadeUp 0.7s 0.6s ease both; opacity: 0; }
+  .tag { font-size: 0.75rem; background: var(--card); border: 1px solid var(--line); padding: 0.3rem 0.75rem; border-radius: 20px; color: var(--muted); letter-spacing: 0.04em; }
+  .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeUp 0.7s 0.7s ease both; opacity: 0; }
+  .btn { padding: 0.75rem 1.8rem; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em; text-decoration: none; border-radius: 2px; transition: all 0.2s; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #a8501f; }
+  .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn svg { width: 15px; height: 15px; fill: currentColor; }
+  .hero-deco {
+    position: absolute; right: 4rem; top: 50%; transform: translateY(-50%);
+    width: 340px; height: 340px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #e8d5c4 0%, #f7f0e8 60%, transparent 80%);
+    opacity: 0.6; pointer-events: none; animation: fadeUp 1s 0.1s ease both;
+  }
+
+  /* SECTIONS */
+  section { padding: 6rem 4rem; border-top: 1px solid var(--line); }
+  .section-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.75rem; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 3rem; line-height: 1.15; }
+
+  /* RESUME */
+  .resume-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+  .resume-col h3 { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+  .resume-col h3.spaced { margin-top: 2.5rem; }
+  .resume-item { margin-bottom: 1.8rem; }
+  .resume-item .role { font-weight: 500; font-size: 0.95rem; }
+  .resume-item .org { color: var(--accent); font-size: 0.88rem; margin-bottom: 0.2rem; }
+  .resume-item .period { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 0.4rem; }
+  .resume-item p { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+  .skills-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+  .skill-chip { font-size: 0.74rem; background: var(--bg); border: 1px solid var(--line); padding: 0.25rem 0.65rem; border-radius: 20px; color: var(--muted); }
+
+  /* GOALS */
+  .goals-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+  .goal-card { background: var(--card); border: 1px solid var(--line); padding: 1.8rem; border-radius: 4px; transition: box-shadow 0.2s, transform 0.2s; position: relative; overflow: hidden; }
+  .goal-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.07); transform: translateY(-3px); }
+  .goal-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+  .goal-num { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--line); line-height: 1; margin-bottom: 0.75rem; }
+  .goal-card h4 { font-size: 1rem; font-weight: 500; margin-bottom: 0.4rem; }
+  .goal-card p { font-size: 0.87rem; color: var(--muted); }
+
+  /* CV */
+  .cv-two { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+  .cv-section-title { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+  .cv-section-title.spaced { margin-top: 2.5rem; }
+  .cv-timeline { position: relative; padding-left: 1.5rem; }
+  .cv-timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .cv-entry { position: relative; margin-bottom: 2rem; padding-left: 1.5rem; }
+  .cv-entry::before { content: ''; position: absolute; left: -1.9rem; top: 0.5rem; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+  .cv-entry .year { font-size: 0.75rem; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; font-weight: 500; margin-bottom: 0.2rem; }
+  .cv-entry h4 { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.15rem; }
+  .cv-entry .inst { font-size: 0.87rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .cv-entry p { font-size: 0.84rem; color: var(--muted); }
+
+  /* ACTIVITIES */
+  .act-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
+  .act-item { background: var(--card); border: 1px solid var(--line); padding: 1.5rem; border-radius: 4px; display: flex; gap: 1rem; align-items: flex-start; transition: border-color 0.2s, transform 0.2s; }
+  .act-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .act-icon { font-size: 1.4rem; flex-shrink: 0; background: var(--bg); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+  .act-item h4 { font-size: 0.92rem; font-weight: 500; margin-bottom: 0.2rem; }
+  .act-item p { font-size: 0.83rem; color: var(--muted); }
+
+  /* CONTACT STRIP */
+  #contact {
+    padding: 4rem; background: var(--ink); border-top: none;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;
+  }
+  #contact h2 { font-family: 'Playfair Display', serif; font-size: 2rem; color: #fff; }
+  #contact p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-top: 0.4rem; }
+  .contact-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .contact-link {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.7rem 1.4rem; border-radius: 2px; font-size: 0.85rem;
+    font-weight: 500; text-decoration: none; transition: all 0.2s; letter-spacing: 0.04em;
+  }
+  .contact-link svg { width: 15px; height: 15px; fill: currentColor; }
+  .contact-link-li { background: #0077b5; color: #fff; }
+  .contact-link-li:hover { background: #005f8e; }
+  .contact-link-email { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+  .contact-link-email:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* FOOTER */
+  footer { padding: 1.5rem 4rem; border-top: 1px solid rgba(255,255,255,0.08); background: var(--ink); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: rgba(255,255,255,0.3); flex-wrap: wrap; gap: 0.5rem; }
+  footer a { color: rgba(255,255,255,0.4); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    #home, section, #contact, footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .resume-grid, .cv-two { grid-template-columns: 1fr; }
+    .hero-deco { display: none; }
+    #contact { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-name" href="#home">Nathan Chan</a>
+  <ul class="nav-links">
+    <li><a href="#resume">Resume</a></li>
+    <li><a href="#goals">Goals</a></li>
+    <li><a href="#cv">CV</a></li>
+    <li><a href="#activities">Activities</a></li>
+    <li>
+      <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="nav-linkedin">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-deco"></div>
+  <p class="hero-label">Biochemistry · Medicine · Research</p>
+  <h1 class="hero-name">Nathan<br><span>Chan</span></h1>
+  <p class="hero-sub">Biochemistry senior at the University of Washington. EMT, competitive climber, and aspiring physician with a passion for immunology, structural biology, and making science accessible.</p>
+  <div class="hero-tags">
+    <span class="tag">GPA 3.80</span>
+    <span class="tag">Dean's List 2022–Present</span>
+    <span class="tag">NREMT Certified</span>
+    <span class="tag">English · Cantonese</span>
+    <span class="tag">Seattle, WA</span>
+  </div>
+  <div class="hero-cta">
+    <a href="#resume" class="btn btn-primary">View Resume</a>
+    <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="btn btn-outline">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+  </div>
+</section>
+
+<!-- RESUME -->
+<section id="resume">
+  <p class="section-label">Experience &amp; Education</p>
+  <h2 class="section-title">Resume</h2>
+  <div class="resume-grid">
+    <div class="resume-col">
+      <h3>Work Experience</h3>
+      <div class="resume-item">
+        <div class="role">Climbing Instructor &amp; Operations</div>
+        <div class="org">Momentum SODO</div>
+        <div class="period">August 2025 – Present</div>
+        <p>Teach introductory climbing classes, coach youth climbers, and assist with facility operations and wall maintenance in a fast-paced community environment.</p>
+      </div>
+      <div class="resume-item">
+        <div class="role">Operations &amp; Wall Maintenance</div>
+        <div class="org">Seattle Bouldering Project</div>
+        <div class="period">October 2022 – August 2025</div>
+        <p>Facility upkeep, instruction, hold stripping and washing. Nearly four years building communication, teaching, and teamwork skills in a community-oriented setting.</p>
+      </div>
+      <div class="resume-item">
+        <div class="role">Dental Assistant</div>
+        <div class="org">Fresh Smile Seattle</div>
+        <div class="period">August 2022 – November 2022</div>
+        <p>Assisted clinical staff during patient procedures, maintaining strict sterilization and patient care standards in a healthcare setting.</p>
+      </div>
+
+      <h3 class="spaced">Research &amp; Lab</h3>
+      <div class="resume-item">
+        <div class="role">Biochemistry Lab (BIOC 426)</div>
+        <div class="org">University of Washington</div>
+        <div class="period">Winter 2026 · Grade: 4.0</div>
+        <p>Multi-week experiments spanning plasmid design through bacterial expression, downstream protein purification, analysis, and assay-based characterization.</p>
+      </div>
+      <div class="resume-item">
+        <div class="role">Immunology 441</div>
+        <div class="org">University of Washington</div>
+        <div class="period">Autumn 2024 · Grade: 3.8</div>
+        <p>T cell biology, development, and signaling. Theoretical training in ELISA, Flow Cytometry, Western Blot, Cre-lox Recombination, and Bone Marrow Chimera assays.</p>
+      </div>
+      <div class="resume-item">
+        <div class="role">Genome 371 – Intro Genetics</div>
+        <div class="org">University of Washington</div>
+        <div class="period">Autumn 2025 · Grade: 3.8</div>
+        <p>DNA sequencing technologies, genome assembly and annotation, gene regulation, and applications of genomics in biology and medicine.</p>
+      </div>
+    </div>
+
+    <div class="resume-col">
+      <h3>Education</h3>
+      <div class="resume-item">
+        <div class="role">B.S. Biochemistry</div>
+        <div class="org">University of Washington, Seattle</div>
+        <div class="period">September 2022 – Expected June 2026</div>
+        <p>Cumulative GPA: 3.80 · STEM GPA: 3.7 · Dean's List every quarter<br><br>Key coursework: Immunology, Biochemistry I–III &amp; Lab, Genome, Physical Chemistry I–II, Organic Chemistry I–III &amp; Lab, Bioethics in Modern Medicine</p>
+      </div>
+      <div class="resume-item">
+        <div class="role">EMT Certification</div>
+        <div class="org">North Seattle College</div>
+        <div class="period">June 2024 – August 2024</div>
+        <p>Pre-hospital medicine, human physiology, rapid decision-making, and teamwork-based patient care. Clinical rotation at Harborview Medical Center.</p>
+      </div>
+
+      <h3 class="spaced">Technical Skills</h3>
+      <div class="resume-item">
+        <div class="skills-grid">
+          <span class="skill-chip">Western Blot / SDS-PAGE</span>
+          <span class="skill-chip">BCA Assay</span>
+          <span class="skill-chip">Enzyme Activity Assay</span>
+          <span class="skill-chip">Plasmid Vector / Bacterial Transformation</span>
+          <span class="skill-chip">Sanger Sequencing</span>
+          <span class="skill-chip">PyMOL · Foldit · AlphaFold</span>
+          <span class="skill-chip">IR · NMR · Mass Spec</span>
+          <span class="skill-chip">Flow Cytometry</span>
+          <span class="skill-chip">ELISA</span>
+          <span class="skill-chip">Word · Excel · PowerPoint</span>
+        </div>
+      </div>
+
+      <h3 class="spaced">Awards &amp; Certifications</h3>
+      <div class="resume-item">
+        <div class="role">Annual Dean's List</div>
+        <div class="period">University of Washington · 2022 – Present (every quarter)</div>
+      </div>
+      <div class="resume-item">
+        <div class="role">NREMT Certification</div>
+        <div class="period">National Registry of Emergency Medical Technicians · Exp. 3/31/2027</div>
+      </div>
+      <div class="resume-item">
+        <div class="role">Prudential Volunteer Service Award</div>
+        <div class="period">227 hours of documented community service</div>
+      </div>
+      <div class="resume-item">
+        <div class="role">SAT: 1590</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section id="goals">
+  <p class="section-label">Looking Ahead</p>
+  <h2 class="section-title">Goals</h2>
+  <div class="goals-list">
+    <div class="goal-card">
+      <div class="goal-num">01</div>
+      <h4>Graduate &amp; Take the MCAT</h4>
+      <p>Complete my B.S. in Biochemistry at UW in June 2026, then prepare for the MCAT as the next step toward medical school.</p>
+    </div>
+    <div class="goal-card">
+      <div class="goal-num">02</div>
+      <h4>Research in Immuno-Oncology</h4>
+      <p>Work in immune research at institutions like the Allen Institute or Fred Hutchinson Cancer Center, contributing to T cell biology and structural biology investigations.</p>
+    </div>
+    <div class="goal-card">
+      <div class="goal-num">03</div>
+      <h4>Medical School &amp; Clinical Career</h4>
+      <p>Build clinical experience as an EMT and ER tech, then attend medical school. Interested in orthopedics, family medicine, and bridging research with patient care.</p>
+    </div>
+    <div class="goal-card">
+      <div class="goal-num">04</div>
+      <h4>Send Double Digits Outdoors</h4>
+      <p>Keep pushing my climbing to double-digit outdoor bouldering grades while advocating for climbing accessibility and building community in the sport.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CV -->
+<section id="cv">
+  <p class="section-label">Academic Record</p>
+  <h2 class="section-title">Curriculum Vitae</h2>
+  <div class="cv-two">
+    <div>
+      <p class="cv-section-title">Education &amp; Training</p>
+      <div class="cv-timeline">
+        <div class="cv-entry">
+          <div class="year">2022 – 2026</div>
+          <h4>B.S. Biochemistry</h4>
+          <div class="inst">University of Washington, Seattle</div>
+          <p>Cumulative GPA: 3.80 · 137 UW credits earned · Dean's List every quarter since enrollment. Currently enrolled in PHRMSC 312: The Science of Drugs (Spring 2026).</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2024</div>
+          <h4>EMT Certification (NREMT)</h4>
+          <div class="inst">North Seattle College · Clinical: Harborview Medical Center</div>
+          <p>Pre-hospital emergency medicine, patient assessment, physiology, and coordinated team-based care.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2023 – 2025</div>
+          <h4>Transfer Credits — 4.0 GPA</h4>
+          <div class="inst">Seattle Central College</div>
+          <p>Art I–II, Research Writing. 20 credits, all 4.0.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2022</div>
+          <h4>Advanced Placement Coursework</h4>
+          <div class="inst">Pre-University</div>
+          <p>AP Chemistry, English Literature, World History, Calculus AB &amp; BC, Physics (Mechanics) — all credited toward UW degree.</p>
+        </div>
+      </div>
+
+      <p class="cv-section-title spaced">Selected Coursework</p>
+      <div class="cv-timeline">
+        <div class="cv-entry">
+          <div class="year">Winter 2026</div>
+          <h4>Biochemistry Lab — BIOC 426 · 4.0</h4>
+          <div class="inst">Plasmid design → bacterial expression → protein purification → assay characterization</div>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Autumn 2025</div>
+          <h4>Genome 371 – Intro Genetics · 3.8</h4>
+          <div class="inst">DNA sequencing technologies, genome assembly, gene regulation</div>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Autumn 2024</div>
+          <h4>Immunology 441 · 3.8</h4>
+          <div class="inst">T cell biology, ELISA, Flow Cytometry, Western Blot, Bone Marrow Chimera assays</div>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Spring 2024</div>
+          <h4>Organic Chemistry Lab 242 · 4.0</h4>
+          <div class="inst">Synthesis, NMR, chromatography, IR spectroscopy</div>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Spring 2025</div>
+          <h4>Bioethics in Modern Medicine — B H 311 · 4.0</h4>
+          <div class="inst">Ethical frameworks in clinical and research settings</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cv-section-title">Clinical &amp; Community Involvement</p>
+      <div class="cv-timeline">
+        <div class="cv-entry">
+          <div class="year">2024 – Present</div>
+          <h4>UW EMS Involvement</h4>
+          <div class="inst">University of Washington</div>
+          <p>Emergency medical services training and campus preparedness following NREMT certification.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2025 – 2026</div>
+          <h4>Healthcare Alternative Spring Break</h4>
+          <div class="inst">UW — Rural Family Medicine Clinic</div>
+          <p>Shadowed providers in rural healthcare settings; engaged in service-learning and community health outreach focused on rural healthcare access.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2022 – Present</div>
+          <h4>Climbing Instructor &amp; Operations</h4>
+          <div class="inst">Momentum SODO / Seattle Bouldering Project</div>
+          <p>Teaching introductory climbing, coaching youth, and facility operations. USAC regional competitor — placed 7th overall.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2022</div>
+          <h4>Dental Assistant</h4>
+          <div class="inst">Fresh Smile Seattle</div>
+          <p>Clinical procedures, sterilization protocols, patient care standards.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2021 – 2022</div>
+          <h4>Academic Tutor</h4>
+          <div class="inst">Seattle Public Schools &amp; Kumon Learning Center</div>
+          <p>Mathematics and foundational subject tutoring for K–12 students.</p>
+        </div>
+      </div>
+
+      <p class="cv-section-title spaced">Honors &amp; Achievements</p>
+      <div class="cv-timeline">
+        <div class="cv-entry">
+          <div class="year">2022 – Present</div>
+          <h4>Annual Dean's List</h4>
+          <div class="inst">University of Washington</div>
+          <p>Achieved Dean's List recognition every quarter since enrollment. Cumulative UW GPA: 3.80.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">2025</div>
+          <h4>USAC Regional Climbing Competition</h4>
+          <div class="inst">USA Climbing — Regional Bouldering</div>
+          <p>Placed 7th overall competing in a USA Climbing regional bouldering event.</p>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Prior</div>
+          <h4>Prudential Volunteer Service Award</h4>
+          <div class="inst">227 hours of documented community service</div>
+        </div>
+        <div class="cv-entry">
+          <div class="year">Prior</div>
+          <h4>SAT: 1590</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTIVITIES -->
+<section id="activities">
+  <p class="section-label">Outside the Classroom</p>
+  <h2 class="section-title">Personal Activities</h2>
+  <div class="act-grid">
+    <div class="act-item">
+      <div class="act-icon">🧗</div>
+      <div>
+        <h4>Competitive Rock Climbing</h4>
+        <p>Training 15–20 hours/week in indoor bouldering across 4 gyms and 6 training boards. USAC regional competitor (7th place). Working toward double-digit outdoor grades.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🚑</div>
+      <div>
+        <h4>Emergency Medical Technician</h4>
+        <p>NREMT certified with clinical experience at Harborview Medical Center and active involvement in UW EMS. Passionate about pre-hospital medicine and emergency care.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🎵</div>
+      <div>
+        <h4>Music</h4>
+        <p>Play guitar, piano, and trumpet. Music has been a long-standing creative outlet alongside the sciences.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🖨️</div>
+      <div>
+        <h4>3D Printing &amp; Engineering</h4>
+        <p>Design and print functional objects, including climbing-related hacks and tools. Enjoy the overlap between engineering problem-solving and hands-on craft.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🪵</div>
+      <div>
+        <h4>Woodworking</h4>
+        <p>Building and crafting with wood as a hands-on hobby that balances time in the lab and gym.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">♟️</div>
+      <div>
+        <h4>Chess &amp; Strategy Games</h4>
+        <p>Enjoy chess and other strategy games as mental training — the same analytical thinking that shows up in research and climbing.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🥋</div>
+      <div>
+        <h4>Wrestling &amp; MMA</h4>
+        <p>Training in combat sports as a complement to climbing — both demand full-body strength, technique, and mental toughness.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🌍</div>
+      <div>
+        <h4>Healthcare Outreach</h4>
+        <p>Participated in UW Healthcare Alternative Spring Break, shadowing rural family medicine providers and engaging in community health service-learning.</p>
+      </div>
+    </div>
+    <div class="act-item">
+      <div class="act-icon">🎭</div>
+      <div>
+        <h4>Cosplay &amp; Art</h4>
+        <p>Creative pursuits including cosplay and visual art — a different kind of building that channels the same attention to detail as lab work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div>
+    <h2>Get in Touch</h2>
+    <p>Open to research opportunities, clinical shadowing, and conversations about medicine &amp; biochemistry.</p>
+  </div>
+  <div class="contact-links">
+    <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="contact-link contact-link-li">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+    <a href="mailto:emailtonathan@gmail.com" class="contact-link contact-link-email">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      emailtonathan@gmail.com
+    </a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Nathan Chan · Seattle, WA</span>
+  <span>B.S. Biochemistry · University of Washington · <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank">linkedin.com/in/nathanchan1234</a></span>
+</footer>
+
+</body>
+</html>
