@@ -397,6 +397,9 @@
       sessionStorage.setItem(SESSION_KEY, '1');
       canEdit = true;
       hideLock();
+      renderToday();
+      renderTomorrow();
+      renderWeekly();
     } else {
       err.classList.add('visible');
       document.getElementById('pwInput').value = '';
