@@ -446,7 +446,7 @@
 
   // ── FIREBASE REFS ─────────────────────────────────────────
   const todayRef  = () => doc(db, 'tasks', todayStr());
-  const tmrwRef   = () => doc(db, 'tasks', tomorrowStr());
+  const tmrwRef = () => doc(db, 'tomorrow', 'queue');
   const weekRef   = () => doc(db, 'weekly', weekKey());
   const archRef   = (dateStr) => doc(db, 'archive', dateStr);
 
