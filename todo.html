@@ -184,7 +184,7 @@
 
   /* HISTORY */
   .history-section { margin-top: 2rem; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1.5rem; }
-  .history-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.2rem; }
+  .history-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; }
   .history-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; }
   .view-all-btn { font-size: 0.8rem; color: var(--accent); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; }
   .history-day { margin-bottom: 1.2rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
@@ -320,10 +320,13 @@
     </div>
 
     <!-- HISTORY -->
-    <div class="history-section" id="historySection" style="display:none">
+    <div class="history-section" id="historySection">
       <div class="history-header">
-        <h2 class="history-title">Archive</h2>
-        <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()">View all →</button>
+        <div>
+          <h2 class="history-title">Archive</h2>
+          <p id="historyMeta" style="font-size:0.78rem; color:var(--muted); margin-top:0.15rem;">No archived days yet — days archive automatically at midnight.</p>
+        </div>
+        <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
       </div>
       <div id="historyList"></div>
     </div>
@@ -701,11 +704,21 @@
   };
 
   function renderHistory() {
-    const section = document.getElementById('historySection');
     const list = document.getElementById('historyList');
-    if (history.length === 0) { section.style.display = 'none'; return; }
-    section.style.display = 'block';
+    const meta = document.getElementById('historyMeta');
+    const viewBtn = document.getElementById('viewAllBtn');
+
     list.innerHTML = '';
+
+    if (history.length === 0) {
+      meta.textContent = 'No archived days yet — days archive automatically at midnight.';
+      viewBtn.style.display = 'none';
+      return;
+    }
+
+    meta.textContent = `${history.length} day${history.length !== 1 ? 's' : ''} archived`;
+    viewBtn.style.display = history.length > 7 ? 'inline' : 'none';
+
     history.forEach(day => {
       const tasks = day.tasks || [];
       const done = tasks.filter(t => t.done).length;
