@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gallery – Nathan Chan</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f0f4f8; --ink: #0f1e2e; --muted: #5a6e82;
+    --accent: #1a6db5; --line: #ccd9e8; --card: #ffffff;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 4rem;
+    background: rgba(240,244,248,0.93); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line); z-index: 100;
+    animation: fadeDown 0.6s ease both;
+  }
+  .nav-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
+  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+  .nav-linkedin {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: var(--ink); color: #fff !important;
+    padding: 0.4rem 0.9rem; border-radius: 2px; font-size: 0.78rem !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important;
+    transition: background 0.2s !important;
+  }
+  .nav-linkedin:hover { background: var(--accent) !important; }
+  .nav-linkedin svg { width: 13px; height: 13px; fill: currentColor; }
+
+  /* MAIN */
+  main { max-width: 1060px; margin: 0 auto; padding: 8rem 2rem 5rem; }
+
+  /* PAGE HEADER */
+  .page-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; animation: fadeUp 0.7s 0.2s ease both; opacity: 0; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); margin-bottom: 0.5rem; line-height: 1.1; animation: fadeUp 0.7s 0.35s ease both; opacity: 0; }
+  .page-sub { font-size: 0.95rem; color: var(--muted); font-weight: 300; margin-bottom: 2.5rem; max-width: 540px; animation: fadeUp 0.7s 0.5s ease both; opacity: 0; }
+
+  /* JUMP NAV */
+  .jump-nav { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 4rem; animation: fadeUp 0.7s 0.6s ease both; opacity: 0; }
+  .jump-pill {
+    padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+    text-decoration: none; color: var(--muted); background: var(--card);
+    border: 1px solid var(--line); transition: all 0.2s; letter-spacing: 0.03em;
+  }
+  .jump-pill:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+  /* ACTIVITY SECTION */
+  .act-section { margin-bottom: 5rem; scroll-margin-top: 5.5rem; }
+  .act-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.4rem; }
+  .act-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .act-emoji { font-size: 1.5rem; }
+  .act-title { font-family: 'Playfair Display', serif; font-size: 1.9rem; }
+  .act-desc { font-size: 0.9rem; color: var(--muted); max-width: 620px; margin-bottom: 1.8rem; line-height: 1.75; }
+  .act-rule { height: 1px; background: var(--line); margin-bottom: 1.8rem; }
+
+  /* MASONRY */
+  .masonry { columns: 3; column-gap: 0.9rem; }
+  .masonry-item {
+    break-inside: avoid; margin-bottom: 0.9rem;
+    border-radius: 6px; overflow: hidden; position: relative;
+    cursor: pointer; background: var(--card); border: 1px solid var(--line);
+    transition: box-shadow 0.25s, transform 0.25s;
+  }
+  .masonry-item:hover { box-shadow: 0 8px 32px rgba(15,30,46,0.13); transform: translateY(-2px); }
+  .masonry-item img { width: 100%; display: block; transition: transform 0.45s ease; }
+  .masonry-item:hover img { transform: scale(1.04); }
+  .photo-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(10,20,35,0.72));
+    color: #fff; font-size: 0.78rem; padding: 2rem 0.9rem 0.8rem;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .masonry-item:hover .photo-overlay { opacity: 1; }
+
+  /* PLACEHOLDER */
+  .photo-placeholder {
+    break-inside: avoid; margin-bottom: 0.9rem;
+    border-radius: 6px; border: 2px dashed var(--line);
+    background: var(--card); display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2.5rem 1rem; text-align: center; min-height: 180px;
+  }
+  .ph-icon { font-size: 1.6rem; opacity: 0.3; margin-bottom: 0.5rem; }
+  .ph-label { font-size: 0.75rem; color: var(--muted); opacity: 0.6; }
+  .ph-filename { font-size: 0.7rem; color: var(--accent); opacity: 0.7; margin-top: 0.25rem; font-family: monospace; }
+
+  /* COMING SOON */
+  .coming-soon {
+    background: var(--card); border: 1px dashed var(--line); border-radius: 6px;
+    padding: 2.5rem; text-align: center; color: var(--muted);
+  }
+  .cs-icon { font-size: 2rem; margin-bottom: 0.6rem; opacity: 0.5; }
+  .cs-text { font-size: 0.88rem; }
+
+  /* LIGHTBOX */
+  #lightbox {
+    position: fixed; inset: 0; background: rgba(8,18,30,0.93);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  #lightbox.open { opacity: 1; pointer-events: all; }
+  #lightbox img {
+    max-width: min(90vw, 900px); max-height: 86vh;
+    border-radius: 4px; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: zoomIn 0.22s ease;
+  }
+  #lb-caption {
+    position: absolute; bottom: 1.8rem; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.65); font-size: 0.82rem; text-align: center;
+    max-width: 480px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #lb-close {
+    position: absolute; top: 1.2rem; right: 1.5rem;
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    width: 2.4rem; height: 2.4rem; border-radius: 50%; font-size: 1.1rem;
+    cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  #lb-close:hover { background: rgba(255,255,255,0.22); }
+  #lb-prev, #lb-next {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    width: 2.8rem; height: 2.8rem; border-radius: 50%; font-size: 1.1rem;
+    cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  #lb-prev { left: 1.2rem; } #lb-next { right: 1.2rem; }
+  #lb-prev:hover, #lb-next:hover { background: rgba(255,255,255,0.22); }
+  #lb-counter { position: absolute; top: 1.4rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.45); font-size: 0.78rem; }
+
+  /* FOOTER */
+  .page-footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .page-footer a { color: var(--accent); text-decoration: none; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes zoomIn { from { transform: scale(0.94); opacity: 0.6; } to { transform: scale(1); opacity: 1; } }
+
+  @media (max-width: 860px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    main { padding: 7rem 1.2rem 4rem; }
+    .masonry { columns: 2; }
+  }
+  @media (max-width: 500px) {
+    .masonry { columns: 1; }
+    #lb-prev, #lb-next { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-name" href="index.html">Nathan Chan</a>
+  <ul class="nav-links">
+    <li><a href="index.html#resume">Resume</a></li>
+    <li><a href="index.html#goals">Goals</a></li>
+    <li><a href="index.html#activities">Activities</a></li>
+    <li><a href="todo.html">Daily Tasks</a></li>
+    <li><a href="climbing.html">Climbing</a></li>
+    <li><a href="gallery.html" class="active">Gallery</a></li>
+    <li>
+      <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="nav-linkedin">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<main>
+  <p class="page-label">Life Outside the Lab</p>
+  <h1 class="page-title">Activities Gallery</h1>
+  <p class="page-sub">Photos from climbing, healthcare outreach, and everything else that keeps life interesting.</p>
+
+  <!-- JUMP NAV -->
+  <div class="jump-nav">
+    <a class="jump-pill" href="#healthcare">🌍 Healthcare Outreach</a>
+    <a class="jump-pill" href="#climbing">🧗 Climbing</a>
+    <a class="jump-pill" href="#music">🎵 Music</a>
+    <a class="jump-pill" href="#woodworking">🪵 Woodworking</a>
+    <a class="jump-pill" href="#3dprinting">🖨️ 3D Printing</a>
+    <a class="jump-pill" href="#cosplay">🎭 Cosplay & Art</a>
+  </div>
+
+  <!-- ─── HEALTHCARE OUTREACH ─────────────────────────────── -->
+  <div class="act-section" id="healthcare">
+    <p class="act-label">Spring 2026</p>
+    <div class="act-header">
+      <span class="act-emoji">🌍</span>
+      <h2 class="act-title">Healthcare Outreach</h2>
+    </div>
+    <p class="act-desc">
+      University of Washington Healthcare Alternative Spring Break — Forks, WA, 2026. Shadowed providers at a rural family medicine clinic and engaged in community health service-learning. An eye-opening look at the realities of rural healthcare access in the Pacific Northwest.
+    </p>
+    <div class="act-rule"></div>
+
+    <!-- 
+      ─────────────────────────────────────────────────────
+      HOW TO ADD YOUR PHOTOS:
+      1. Compress photos at squoosh.app (aim for under 400KB each)
+      2. Upload them to your GitHub repo in a folder called "photos/"
+      3. Replace each placeholder below with a real image block:
+
+      <div class="masonry-item" onclick="openLightbox('photos/your-photo.jpg', 'Caption here', 'healthcare')">
+        <img src="photos/your-photo.jpg" alt="Caption here" loading="lazy"/>
+        <div class="photo-overlay">Caption here</div>
+      </div>
+
+      4. Delete the placeholder divs you don't need
+      ─────────────────────────────────────────────────────
+    -->
+
+    <div class="masonry" id="masonry-healthcare">
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-1.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-2.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-3.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-4.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-5.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-6.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-7.jpg</p></div>
+      <div class="photo-placeholder"><div class="ph-icon">📷</div><p class="ph-label">Add photo</p><p class="ph-filename">photos/hcasb-8.jpg</p></div>
+    </div>
+  </div>
+
+  <!-- ─── CLIMBING ──────────────────────────────────────── -->
+  <div class="act-section" id="climbing">
+    <p class="act-label">2022 – Present</p>
+    <div class="act-header">
+      <span class="act-emoji">🧗</span>
+      <h2 class="act-title">Climbing</h2>
+    </div>
+    <p class="act-desc">
+      Training 15–20 hours/week across 4 gyms in Seattle. USAC regional competitor (7th place). Working toward double-digit outdoor grades. Follow <a href="https://www.instagram.com/nategoup" target="_blank" style="color:var(--accent);text-decoration:none;">@nategoup</a> for climbing content.
+    </p>
+    <div class="act-rule"></div>
+    <div class="coming-soon">
+      <div class="cs-icon">🧗</div>
+      <p class="cs-text">Climbing photos coming soon — follow <a href="https://www.instagram.com/nategoup" target="_blank" style="color:var(--accent);text-decoration:none;">@nategoup</a> in the meantime.</p>
+    </div>
+  </div>
+
+  <!-- ─── MUSIC ─────────────────────────────────────────── -->
+  <div class="act-section" id="music">
+    <p class="act-label">Ongoing</p>
+    <div class="act-header">
+      <span class="act-emoji">🎵</span>
+      <h2 class="act-title">Music</h2>
+    </div>
+    <p class="act-desc">Guitar, piano, and trumpet. Music as a creative counterweight to the sciences.</p>
+    <div class="act-rule"></div>
+    <div class="coming-soon">
+      <div class="cs-icon">🎵</div>
+      <p class="cs-text">Photos coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ─── WOODWORKING ───────────────────────────────────── -->
+  <div class="act-section" id="woodworking">
+    <p class="act-label">Ongoing</p>
+    <div class="act-header">
+      <span class="act-emoji">🪵</span>
+      <h2 class="act-title">Woodworking</h2>
+    </div>
+    <p class="act-desc">Building and crafting as a hands-on hobby that balances time in the lab and gym.</p>
+    <div class="act-rule"></div>
+    <div class="coming-soon">
+      <div class="cs-icon">🪵</div>
+      <p class="cs-text">Photos coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ─── 3D PRINTING ───────────────────────────────────── -->
+  <div class="act-section" id="3dprinting">
+    <p class="act-label">Ongoing</p>
+    <div class="act-header">
+      <span class="act-emoji">🖨️</span>
+      <h2 class="act-title">3D Printing & Engineering</h2>
+    </div>
+    <p class="act-desc">Designing and printing functional objects — climbing hacks, tools, and whatever engineering problem needs solving.</p>
+    <div class="act-rule"></div>
+    <div class="coming-soon">
+      <div class="cs-icon">🖨️</div>
+      <p class="cs-text">Photos coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ─── COSPLAY & ART ─────────────────────────────────── -->
+  <div class="act-section" id="cosplay">
+    <p class="act-label">Ongoing</p>
+    <div class="act-header">
+      <span class="act-emoji">🎭</span>
+      <h2 class="act-title">Cosplay & Art</h2>
+    </div>
+    <p class="act-desc">Creative pursuits that channel the same attention to detail as lab work — just with different materials.</p>
+    <div class="act-rule"></div>
+    <div class="coming-soon">
+      <div class="cs-icon">🎭</div>
+      <p class="cs-text">Photos coming soon.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Nathan Chan · Seattle, WA</span>
+    <span><a href="index.html">← Back to site</a> · <a href="https://www.instagram.com/nategoup" target="_blank">@nategoup</a></span>
+  </div>
+</main>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lb-close" onclick="closeLightbox()">✕</button>
+  <button id="lb-prev" onclick="shiftLightbox(-1)">&#8592;</button>
+  <img id="lb-img" src="" alt=""/>
+  <button id="lb-next" onclick="shiftLightbox(1)">&#8594;</button>
+  <div id="lb-caption"></div>
+  <div id="lb-counter"></div>
+</div>
+
+<script>
+  // ── LIGHTBOX ──────────────────────────────────────────────
+  let currentSection = [];
+  let currentIndex = 0;
+
+  // Build photo index per section from DOM
+  function getSectionPhotos(sectionId) {
+    const items = document.querySelectorAll(`#masonry-${sectionId} .masonry-item`);
+    return Array.from(items).map(el => ({
+      src: el.querySelector('img').src,
+      caption: el.querySelector('.photo-overlay')?.textContent?.trim() || ''
+    }));
+  }
+
+  window.openLightbox = function(src, caption, sectionId) {
+    currentSection = getSectionPhotos(sectionId);
+    currentIndex = currentSection.findIndex(p => p.src.includes(src.split('/').pop()));
+    if (currentIndex < 0) currentIndex = 0;
+    showLightboxItem();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  function showLightboxItem() {
+    const item = currentSection[currentIndex];
+    if (!item) return;
+    document.getElementById('lb-img').src = item.src;
+    document.getElementById('lb-caption').textContent = item.caption;
+    document.getElementById('lb-counter').textContent =
+      currentSection.length > 1 ? `${currentIndex + 1} / ${currentSection.length}` : '';
+  }
+
+  window.shiftLightbox = function(dir) {
+    currentIndex = (currentIndex + dir + currentSection.length) % currentSection.length;
+    document.getElementById('lb-img').style.animation = 'none';
+    requestAnimationFrame(() => {
+      document.getElementById('lb-img').style.animation = '';
+      showLightboxItem();
+    });
+  };
+
+  window.closeLightbox = function() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  // Close on background click
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') shiftLightbox(1);
+    if (e.key === 'ArrowLeft') shiftLightbox(-1);
+  });
+
+  // ── HIGHLIGHT ACTIVE JUMP PILL ON SCROLL ─────────────────
+  const sections = document.querySelectorAll('.act-section');
+  const pills = document.querySelectorAll('.jump-pill');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        pills.forEach(p => p.classList.remove('active'));
+        const match = document.querySelector(`.jump-pill[href="#${entry.target.id}"]`);
+        if (match) match.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
