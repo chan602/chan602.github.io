@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Climbing Log – Nathan Chan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f0f4f8; --ink: #0f1e2e; --muted: #5a6e82;
+    --accent: #1a6db5; --line: #ccd9e8; --card: #ffffff;
+    --green-light: #4caf50;   /* V8 sends */
+    --green-mid:   #2e7d32;   /* V9 sends */
+    --green-dark:  #1b5e20;   /* V10+ sends */
+    --green-bg:    #e8f5e9;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 4rem;
+    background: rgba(240,244,248,0.93); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line); z-index: 100;
+    animation: fadeDown 0.6s ease both;
+  }
+  .nav-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
+  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+  .nav-linkedin {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: var(--ink); color: #fff !important;
+    padding: 0.4rem 0.9rem; border-radius: 2px; font-size: 0.78rem !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important;
+    transition: background 0.2s !important;
+  }
+  .nav-linkedin:hover { background: var(--accent) !important; }
+  .nav-linkedin svg { width: 13px; height: 13px; fill: currentColor; }
+
+  /* MAIN */
+  main { max-width: 960px; margin: 0 auto; padding: 8rem 2rem 5rem; }
+
+  /* HERO */
+  .page-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; animation: fadeUp 0.7s 0.2s ease both; opacity: 0; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); margin-bottom: 0.5rem; line-height: 1.1; animation: fadeUp 0.7s 0.35s ease both; opacity: 0; }
+  .page-sub { font-size: 0.95rem; color: var(--muted); font-weight: 300; margin-bottom: 2rem; max-width: 540px; animation: fadeUp 0.7s 0.5s ease both; opacity: 0; }
+
+  /* INSTAGRAM LINK */
+  .ig-link {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    text-decoration: none; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line);
+    padding: 0.55rem 1.1rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;
+    transition: all 0.25s; margin-bottom: 3rem;
+    animation: fadeUp 0.7s 0.6s ease both; opacity: 0;
+    position: relative; overflow: hidden;
+  }
+  .ig-link::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .ig-link:hover::before { opacity: 1; }
+  .ig-link:hover { color: #fff; border-color: transparent; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220,39,67,0.3); }
+  .ig-link span, .ig-link svg { position: relative; z-index: 1; }
+  .ig-link svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+  .ig-hint { position: absolute; bottom: -1.8rem; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: var(--muted); white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .ig-wrap { position: relative; display: inline-block; margin-bottom: 3rem; animation: fadeUp 0.7s 0.6s ease both; opacity: 0; }
+  .ig-wrap:hover .ig-hint { opacity: 1; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 4rem; color: var(--muted); font-size: 0.9rem; }
+  .loading-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: 0 3px; animation: bounce 1.2s infinite; }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+
+  /* SECTION */
+  .section { margin-bottom: 2.5rem; animation: fadeUp 0.6s ease both; }
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.4rem; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 1.2rem; }
+
+  /* METRIC CARDS */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+  .metric-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.25rem 1.25rem 1rem; position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .metric-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(26,109,181,0.1); }
+  .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+  .metric-card.green::before { background: var(--green-light); }
+  .metric-val { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); line-height: 1; margin-bottom: 0.3rem; }
+  .metric-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* CHART AREA */
+  .chart-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .chart-title { font-size: 0.88rem; font-weight: 500; color: var(--ink); margin-bottom: 0.3rem; }
+  .chart-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.2rem; }
+  canvas { width: 100% !important; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 6px; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--card); }
+  thead tr { background: var(--bg); border-bottom: 2px solid var(--line); }
+  th { padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); color: var(--ink); }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  .grade-badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 500;
+    padding: 0.15rem 0.5rem; border-radius: 10px; background: var(--green-bg); color: var(--green-mid);
+  }
+  .intensity-high { color: var(--accent); font-weight: 500; }
+  .intensity-mod { color: var(--muted); }
+
+  /* COLLAPSIBLE LOG */
+  .collapse-btn {
+    display: flex; align-items: center; gap: 0.5rem; width: 100%;
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1rem 1.25rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem; font-weight: 500; color: var(--ink); text-align: left;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .collapse-btn:hover { background: var(--bg); border-color: var(--accent); }
+  .collapse-arrow { margin-left: auto; transition: transform 0.3s; font-size: 0.75rem; color: var(--muted); }
+  .collapse-btn.open .collapse-arrow { transform: rotate(180deg); }
+  .collapse-content { display: none; margin-top: 0.5rem; }
+  .collapse-content.open { display: block; }
+
+  /* FOOTER */
+  .page-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .page-footer a { color: var(--accent); text-decoration: none; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 680px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    main { padding: 7rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-name" href="index.html">Nathan Chan</a>
+  <ul class="nav-links">
+    <li><a href="index.html#resume">Resume</a></li>
+    <li><a href="index.html#goals">Goals</a></li>
+    <li><a href="index.html#activities">Activities</a></li>
+    <li><a href="todo.html">Daily Tasks</a></li>
+    <li><a href="climbing.html" class="active">Climbing</a></li>
+    <li>
+      <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="nav-linkedin">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<main>
+  <p class="page-label">Training · Performance · Progress</p>
+  <h1 class="page-title">Climbing Log</h1>
+  <p class="page-sub">Live training data pulled from my session log. Tracking volume, intensity, and weighted performance over time.</p>
+
+  <!-- INSTAGRAM -->
+  <div class="ig-wrap">
+    <a href="https://www.instagram.com/nategoup" target="_blank" class="ig-link">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+      </svg>
+      <span>@nategoup</span>
+    </a>
+    <span class="ig-hint">Click to view climbing content ↗</span>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="loadingState" class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+    <p style="margin-top:1rem">Loading training data…</p>
+  </div>
+
+  <div id="appContent" style="display:none">
+
+    <!-- METRICS -->
+    <div class="section" style="animation-delay:0.1s">
+      <p class="section-label">Overview</p>
+      <p class="section-title">Volume Summary</p>
+      <div class="metrics-grid" id="metricsGrid"></div>
+    </div>
+
+    <!-- BAR CHART: Hours over time -->
+    <div class="section" style="animation-delay:0.2s">
+      <p class="section-label">Volume</p>
+      <p class="section-title">Weekly Hours</p>
+      <div class="chart-card">
+        <div class="chart-title">Hours per week</div>
+        <div class="chart-sub">Green bars indicate weeks with V8+ sends — darker green for harder grades</div>
+        <canvas id="hoursChart" height="200"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#b0bec5"></div>No sends</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green-light)"></div>V8 send</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green-mid)"></div>V9 send</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green-dark)"></div>V10+ send</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE CHART: Score/hr trend -->
+    <div class="section" style="animation-delay:0.3s">
+      <p class="section-label">Performance</p>
+      <p class="section-title">Weighted Score / Hr Trend</p>
+      <div class="chart-card">
+        <div class="chart-title">Score/hr by calendar week</div>
+        <div class="chart-sub">Higher = more hard sends per hour of climbing</div>
+        <canvas id="scoreChart" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- WEEKLY TABLE -->
+    <div class="section" style="animation-delay:0.4s">
+      <p class="section-label">Breakdown</p>
+      <p class="section-title">Weekly Performance</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Hours</th>
+              <th>Weighted Score</th>
+              <th>Score / Hr</th>
+              <th>Top Grade</th>
+            </tr>
+          </thead>
+          <tbody id="weeklyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FULL LOG (collapsed) -->
+    <div class="section" style="animation-delay:0.5s">
+      <p class="section-label">Raw Data</p>
+      <p class="section-title">Full Session Log</p>
+      <button class="collapse-btn" id="collapseBtn" onclick="toggleLog()">
+        <span>📋 View all sessions</span>
+        <span class="collapse-arrow">▼</span>
+      </button>
+      <div class="collapse-content" id="logContent">
+        <div class="table-wrap" style="margin-top:0.5rem">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Intensity</th>
+                <th>Grade(s) Sent</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <span>Data updates live from Google Sheets</span>
+    <span><a href="https://www.instagram.com/nategoup" target="_blank">@nategoup</a> · Nathan Chan · Seattle, WA</span>
+  </div>
+</main>
+
+<!-- CHART.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRbeNoE4QPLiUeFsXDCQNz3DG8YZlnihFZ-E0Q225WJhl_Gjj2xHV0vVJHOj7-sJA344v6jB_d0Tsli/pub?output=csv';
+
+  // Exact column names from the sheet (A–E, G–J):
+  // A=Date, B=Hours, C=Intensity, D=Grade(s) Sent, E=Total (Hrs)
+  // G=Week, H=Hours (week), I=Weighted Score, J=Score/hr
+  // Note: columns F is blank, so CSV will have an empty header for col F
+  // and col H will be a second "Hours" — we use positional index to distinguish
+
+  // ── GRADE HELPERS ─────────────────────────────────────────
+  function gradeScore(gradeStr) {
+    if (!gradeStr || gradeStr.trim() === '' || gradeStr === '\u2014') return 0;
+    let total = 0;
+    const matches = gradeStr.toLowerCase().match(/v(\d+)/g) || [];
+    matches.forEach(g => {
+      const n = parseInt(g.slice(1));
+      if (n >= 8) total += Math.pow(2, n - 8); // V8=1, V9=2, V10=4, V11=8…
+    });
+    return total;
+  }
+
+  function topGradeNum(gradeStr) {
+    if (!gradeStr) return 0;
+    const matches = gradeStr.toLowerCase().match(/v(\d+)/g) || [];
+    return matches.reduce((max, g) => Math.max(max, parseInt(g.slice(1))), 0);
+  }
+
+  function gradeBarColor(gradeStr) {
+    const top = topGradeNum(gradeStr);
+    if (top >= 10) return '#1b5e20';
+    if (top === 9)  return '#2e7d32';
+    if (top === 8)  return '#4caf50';
+    return '#b0bec5';
+  }
+
+  // ── CSV PARSER (positional) ───────────────────────────────
+  function splitCSVLine(line) {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; continue; }
+      if (line[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += line[i];
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
+
+  function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = splitCSVLine(lines[0]).map(h => h.replace(/"/g,'').trim());
+
+    // Find exact column indices by header name
+    // Session columns (left side)
+    const iDate      = headers.indexOf('Date');
+    const iHours     = headers.indexOf('Hours');          // first "Hours" = col B
+    const iIntensity = headers.indexOf('Intensity');
+    const iGrade     = headers.indexOf('Grade(s) Sent');
+    const iTotalHrs  = headers.indexOf('Total (Hrs)');
+
+    // Weekly summary columns (right side)
+    const iWeek      = headers.indexOf('Week');
+    // Second "Hours" column — find it after iHours
+    const iWeekHours = headers.indexOf('Hours', iHours + 1);
+    const iWeightedScore = headers.indexOf('Weighted Score');
+    const iScoreHr   = headers.indexOf('Score/hr');
+
+    // Session rows = rows where col A (Date) is non-empty
+    const sessionRows = [];
+    // Weekly rows = rows where col G (Week) is non-empty
+    const weekRows = [];
+
+    lines.slice(1).forEach(line => {
+      const cols = splitCSVLine(line).map(c => c.replace(/"/g,'').trim());
+      const date = iDate >= 0 ? (cols[iDate] || '') : '';
+      const week = iWeek >= 0 ? (cols[iWeek] || '') : '';
+
+      if (date) {
+        sessionRows.push({
+          date,
+          hours:     parseFloat(cols[iHours] || '') || 0,
+          intensity: cols[iIntensity] || '',
+          grade:     cols[iGrade] || '',
+          totalHrs:  isTotalHrs(cols[iTotalHrs]) ? parseFloat(cols[iTotalHrs]) : null,
+        });
+      }
+      if (week) {
+        weekRows.push({
+          week,
+          hours:         parseFloat(cols[iWeekHours] || '') || 0,
+          weightedScore: parseFloat(cols[iWeightedScore] || '') || 0,
+          scoreHr:       parseFloat(cols[iScoreHr] || '') || 0,
+        });
+      }
+    });
+
+    return { sessionRows, weekRows };
+  }
+
+  function isTotalHrs(val) {
+    return val && val !== '' && !isNaN(parseFloat(val));
+  }
+
+  // ── MAIN ─────────────────────────────────────────────────
+  async function loadData() {
+    try {
+      const res = await fetch(CSV_URL);
+      const text = await res.text();
+      const { sessionRows, weekRows } = parseCSV(text);
+      buildPage(sessionRows, weekRows);
+    } catch(e) {
+      document.getElementById('loadingState').innerHTML =
+        '<p style="color:#e05050;text-align:center">Could not load data — make sure the Google Sheet is published publicly as CSV.</p>';
+    }
+  }
+
+  function buildPage(sessions, weeks) {
+    // ── METRICS ──────────────────────────────────────────
+    const totalHrs   = sessions.reduce((s, r) => s + r.hours, 0);
+    const totalHrsE  = sessions[0]?.totalHrs ?? totalHrs; // use sheet's Total (Hrs) if present in row 2
+    const numSessions = sessions.length;
+    const sendDays   = sessions.filter(r => r.grade && r.grade !== '\u2014' && r.grade !== '').length;
+    const v8PlusDays = sessions.filter(r => topGradeNum(r.grade) >= 8).length;
+    const allScoreHrs = weeks.filter(w => w.scoreHr > 0).map(w => w.scoreHr);
+    const avgScoreHr  = allScoreHrs.length ? (allScoreHrs.reduce((a,b)=>a+b,0)/allScoreHrs.length).toFixed(3) : '—';
+
+    document.getElementById('metricsGrid').innerHTML = `
+      <div class="metric-card"><div class="metric-val">${totalHrsE ? totalHrsE.toFixed(1) : totalHrs.toFixed(1)}</div><div class="metric-label">Total Hours</div></div>
+      <div class="metric-card"><div class="metric-val">${numSessions}</div><div class="metric-label">Sessions</div></div>
+      <div class="metric-card green"><div class="metric-val">${v8PlusDays}</div><div class="metric-label">V8+ Send Days</div></div>
+      <div class="metric-card green"><div class="metric-val">${sendDays}</div><div class="metric-label">Days with Sends</div></div>
+      <div class="metric-card"><div class="metric-val">${avgScoreHr}</div><div class="metric-label">Avg Score / Hr</div></div>
+      <div class="metric-card"><div class="metric-val">${(totalHrs/numSessions).toFixed(1)}</div><div class="metric-label">Avg Hrs / Session</div></div>
+    `;
+
+    // ── BUILD TOP GRADE PER WEEK (from session rows) ──────
+    // For bar color — map week label → top grade sent that week
+    // We need to join sessions to weeks by date range — easier: just track per week
+    // Since sessions don't have a week column, use weekRows order and session dates
+    // Simplest: for each week row, find sessions whose date falls in that range
+    // But dates are M/D format without year — build a lookup from gradeBarColor
+    // using session data grouped by week order
+    // We'll assign sessions to weeks sequentially based on sheet row order
+    const weekGrades = {};
+    // Build a map of week label → sessions from session rows
+    // The sheet interleaves: sessions on left, weeks on right — same row count roughly
+    // Best approach: for each session row index, the week it belongs to is determined
+    // by looking at which week's date range it falls in
+    // Parse date ranges like "2/2–2/8"
+    function parseDateRange(rangeStr) {
+      // e.g. "2/2–2/8" or "2/23–3/1"
+      const parts = rangeStr.split(/[–\-]/);
+      if (parts.length < 2) return null;
+      const parseDate = s => {
+        s = s.trim();
+        const [m, d] = s.split('/').map(Number);
+        // assume current year
+        return new Date(2026, m-1, d);
+      };
+      try { return { start: parseDate(parts[0]), end: parseDate(parts[1]) }; }
+      catch(e) { return null; }
+    }
+
+    const weekRanges = weeks.map(w => ({ ...w, range: parseDateRange(w.week) }));
+
+    sessions.forEach(s => {
+      const [m, d] = s.date.split('/').map(Number);
+      const sDate = new Date(2026, m-1, d);
+      const match = weekRanges.find(w => w.range && sDate >= w.range.start && sDate <= w.range.end);
+      if (match) {
+        if (!weekGrades[match.week]) weekGrades[match.week] = '';
+        const top = topGradeNum(s.grade);
+        if (top > topGradeNum(weekGrades[match.week])) weekGrades[match.week] = s.grade;
+      }
+    });
+
+    // ── BAR CHART: Hours per week ─────────────────────────
+    const weekLabels = weeks.map(w => w.week);
+    const barHours   = weeks.map(w => w.hours);
+    const barColors  = weeks.map(w => gradeBarColor(weekGrades[w.week] || ''));
+
+    new Chart(document.getElementById('hoursChart'), {
+      type: 'bar',
+      data: {
+        labels: weekLabels,
+        datasets: [{
+          label: 'Hours',
+          data: barHours,
+          backgroundColor: barColors,
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: ctx => {
+                const w = weeks[ctx.dataIndex];
+                const g = weekGrades[w.week];
+                const top = topGradeNum(g);
+                return top >= 8 ? 'Top send: V' + top : 'No V8+ sends';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#5a6e82' } },
+          y: { grid: { color: '#ccd9e8' }, ticks: { font: { size: 11 }, color: '#5a6e82' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // ── LINE CHART: Score/hr by week ──────────────────────
+    const scoreHrData = weeks.map(w => w.scoreHr || null);
+
+    new Chart(document.getElementById('scoreChart'), {
+      type: 'line',
+      data: {
+        labels: weekLabels,
+        datasets: [{
+          label: 'Score / Hr',
+          data: scoreHrData,
+          borderColor: '#1a6db5',
+          backgroundColor: 'rgba(26,109,181,0.08)',
+          pointBackgroundColor: '#1a6db5',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          tension: 0.35,
+          fill: true,
+          spanGaps: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => 'Score/hr: ' + ctx.parsed.y } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#5a6e82' } },
+          y: { grid: { color: '#ccd9e8' }, ticks: { font: { size: 11 }, color: '#5a6e82' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // ── WEEKLY TABLE ──────────────────────────────────────
+    const weekTbody = document.getElementById('weeklyTableBody');
+    weeks.forEach(w => {
+      const top = topGradeNum(weekGrades[w.week] || '');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${w.week}</td>
+        <td>${w.hours.toFixed(2)}</td>
+        <td>${w.weightedScore}</td>
+        <td>${w.scoreHr}</td>
+        <td>${top >= 8 ? `<span class="grade-badge">V${top}</span>` : '—'}</td>
+      `;
+      weekTbody.appendChild(tr);
+    });
+
+    // ── FULL SESSION LOG ──────────────────────────────────
+    const logTbody = document.getElementById('logTableBody');
+    sessions.forEach(r => {
+      const hasGrade = r.grade && r.grade !== '\u2014' && r.grade !== '';
+      const isHigh   = /high/i.test(r.intensity);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${r.hours}</td>
+        <td class="${isHigh ? 'intensity-high' : 'intensity-mod'}">${r.intensity || '—'}</td>
+        <td>${hasGrade ? `<span class="grade-badge">${r.grade}</span>` : '—'}</td>
+      `;
+      logTbody.appendChild(tr);
+    });
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
+  }
+
+  // ── TOGGLE LOG ────────────────────────────────────────────
+  window.toggleLog = function() {
+    const btn = document.getElementById('collapseBtn');
+    const content = document.getElementById('logContent');
+    btn.classList.toggle('open');
+    content.classList.toggle('open');
+  };
+
+  loadData();
+</script>
+</body>
+</html>
