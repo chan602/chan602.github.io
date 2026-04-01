@@ -137,6 +137,7 @@
   .task-item:last-child { border-bottom: none; }
   .task-item:hover { background: var(--bg); }
   .task-item.carried { opacity: 0.7; }
+  .task-item.multi-carried .task-text { font-weight: 700; }
 
   .task-num { font-size: 0.72rem; color: var(--muted); min-width: 1.4rem; margin-top: 3px; font-weight: 500; }
   .task-check {
@@ -433,7 +434,7 @@
 
   // ── FIREBASE REFS ─────────────────────────────────────────
   const todayRef  = () => doc(db, 'tasks', todayStr());
-  const tmrwRef   = () => doc(db, 'tasks', tomorrowStr());
+  const tmrwRef   = () => doc(db, 'tomorrow', 'queue'); // fixed doc — always the current tomorrow queue
   const weekRef   = () => doc(db, 'weekly', weekKey());
   const archRef   = (dateStr) => doc(db, 'archive', dateStr);
 
@@ -491,7 +492,7 @@
       });
     }
 
-    // Carry unfinished yesterday tasks → today (merge)
+    // Carry unfinished yesterday tasks → today (merge), increment carryCount
     const todaySnap = await getDoc(todayRef());
     const existingToday = todaySnap.exists() ? (todaySnap.data().tasks || []) : [];
 
@@ -499,19 +500,14 @@
     if (ySnap.exists()) {
       carryOver = (ySnap.data().tasks || [])
         .filter(t => !t.done)
-        .map(t => ({ ...t, carried: true, done: false }));
+        .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
     }
 
-    // Merge tomorrow tasks → today
-    const tmrwSnap = await getDoc(doc(db, 'tasks', yStr.replace(yStr, todayStr()))); // today's "tomorrow" file is actually today
-    // Get what WAS tomorrow (now today)
-    const prevTmrwSnap = await getDoc(tmrwRef());
-    // Actually: tomorrow tasks from yesterday = today's extra tasks
-    // We need yesterday's tomorrow doc
-    const yesterdayTmrw = await getDoc(doc(db, 'tasks', yStr + '_tomorrow'));
+    // Merge tomorrow queue → today
+    const yesterdayTmrw = await getDoc(tmrwRef());
     let fromTmrw = [];
     if (yesterdayTmrw.exists()) {
-      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false }));
+      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
     }
 
     const merged = [...existingToday, ...carryOver, ...fromTmrw];
@@ -519,8 +515,8 @@
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
 
-    // Clear tomorrow doc for the new day
-    await setDoc(doc(db, 'tasks', todayStr() + '_tomorrow'), { tasks: [], date: todayStr() });
+    // Clear tomorrow queue for the new day
+    await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
 
     // Check weekly rollover (Sunday)
     const dayOfWeek = new Date().getDay();
@@ -546,7 +542,7 @@
     if (!prevSnap.exists()) return;
 
     const prevTasks = prevSnap.data().tasks || [];
-    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false }));
+    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
 
     const thisSnap = await getDoc(weekRef());
     const current = thisSnap.exists() ? (thisSnap.data().tasks || []) : [];
@@ -565,7 +561,7 @@
     if (!canEdit) return;
     let inputId, tasks, ref, syncId;
     if (type === 'today')   { inputId = 'todayInput';   tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { inputId = 'weeklyInput';  tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const input = document.getElementById(inputId);
@@ -587,7 +583,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
@@ -603,7 +599,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.filter(t => t.id !== id);
@@ -624,9 +620,15 @@
     }
     tasks.forEach((t, i) => {
       const li = document.createElement('li');
-      li.className = 'task-item' + (t.done ? ' done' : '') + (t.carried ? ' carried' : '');
+      const isMultiCarried = (t.carryCount || 0) >= 2;
+      li.className = 'task-item'
+        + (t.done ? ' done' : '')
+        + (t.carried ? ' carried' : '')
+        + (isMultiCarried ? ' multi-carried' : '');
       const carriedTag = t.carried
-        ? (type === 'weekly' ? '<span class="weekly-carried-tag">↩ carried</span>' : '<span class="carried-tag">↩ carried</span>')
+        ? (type === 'weekly'
+            ? `<span class="weekly-carried-tag">↩ carried${isMultiCarried ? ' ×' + t.carryCount : ''}</span>`
+            : `<span class="carried-tag">↩ carried${isMultiCarried ? ' ×' + t.carryCount : ''}</span>`)
         : '';
       const editBtns = canEdit ? `
         <button class="task-check" onclick="toggleTask('${type}', ${t.id})">
