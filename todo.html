@@ -528,7 +528,9 @@
       fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
     }
 
-    const merged = [...existingToday, ...carryOver, ...fromTmrw];
+    const allTasks = [...existingToday, ...carryOver, ...fromTmrw];
+    const seen = new Set();
+    const merged = allTasks.filter(t => seen.has(t.id) ? false : seen.add(t.id));
     if (merged.length > 0 || existingToday.length === 0) {
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
