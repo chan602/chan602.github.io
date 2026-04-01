@@ -431,11 +431,11 @@
     const avgScoreHr  = allScoreHrs.length ? (allScoreHrs.reduce((a,b)=>a+b,0)/allScoreHrs.length).toFixed(3) : '—';
 
     document.getElementById('metricsGrid').innerHTML = `
+      <div class="metric-card"><div class="metric-val">${weeks.length > 0 ? (totalHrs/weeks.length).toFixed(1) : '—'}</div><div class="metric-label">Avg Hrs / Week</div></div>
       <div class="metric-card"><div class="metric-val">${totalHrsE ? totalHrsE.toFixed(1) : totalHrs.toFixed(1)}</div><div class="metric-label">Total Hours</div></div>
       <div class="metric-card"><div class="metric-val">${numSessions}</div><div class="metric-label">Sessions</div></div>
       <div class="metric-card green"><div class="metric-val">${v8PlusDays}</div><div class="metric-label">V8+ Send Days</div></div>
       <div class="metric-card"><div class="metric-val">${avgScoreHr}</div><div class="metric-label">Avg Score / Hr</div></div>
-      <div class="metric-card"><div class="metric-val">${weeks.length > 0 ? (totalHrs/weeks.length).toFixed(1) : '—'}</div><div class="metric-label">Avg Hrs / Week</div></div>
     `;
 
     // ── BUILD TOP GRADE PER WEEK (from session rows) ──────
