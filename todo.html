@@ -518,19 +518,14 @@
     if (ySnap.exists()) {
       carryOver = (ySnap.data().tasks || [])
         .filter(t => !t.done)
-        .map(t => ({ ...t, carried: true, done: false }));
+        .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
     }
 
-    // Merge tomorrow tasks → today
-    const tmrwSnap = await getDoc(doc(db, 'tasks', yStr.replace(yStr, todayStr()))); // today's "tomorrow" file is actually today
-    // Get what WAS tomorrow (now today)
-    const prevTmrwSnap = await getDoc(tmrwRef());
-    // Actually: tomorrow tasks from yesterday = today's extra tasks
-    // We need yesterday's tomorrow doc
-    const yesterdayTmrw = await getDoc(doc(db, 'tasks', yStr + '_tomorrow'));
+    // Merge tomorrow queue → today
+    const yesterdayTmrw = await getDoc(tmrwRef());
     let fromTmrw = [];
     if (yesterdayTmrw.exists()) {
-      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false }));
+      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
     }
 
     const merged = [...existingToday, ...carryOver, ...fromTmrw];
@@ -538,8 +533,8 @@
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
 
-    // Clear tomorrow doc for the new day
-    await setDoc(doc(db, 'tasks', todayStr() + '_tomorrow'), { tasks: [], date: todayStr() });
+    // Clear tomorrow queue for the new day
+    await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
 
     // Check weekly rollover (Sunday)
     const dayOfWeek = new Date().getDay();
@@ -584,7 +579,7 @@
     if (!canEdit) return;
     let inputId, tasks, ref, syncId;
     if (type === 'today')   { inputId = 'todayInput';   tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = tmrwRef(); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { inputId = 'weeklyInput';  tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const input = document.getElementById(inputId);
@@ -606,7 +601,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef(); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
@@ -622,7 +617,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef(); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.filter(t => t.id !== id);
