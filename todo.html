@@ -19,7 +19,7 @@
 
   /* LOCK */
   #lockScreen {
-    position: fixed; inset: 0; background: var(--bg);
+    position: fixed; inset: 0; background: rgba(15,30,46,0.5);
     display: flex; align-items: center; justify-content: center; z-index: 999;
   }
   #lockScreen.hidden { display: none; }
@@ -137,7 +137,6 @@
   .task-item:last-child { border-bottom: none; }
   .task-item:hover { background: var(--bg); }
   .task-item.carried { opacity: 0.7; }
-  .task-item.multi-carried .task-text { font-weight: 700; }
 
   .task-num { font-size: 0.72rem; color: var(--muted); min-width: 1.4rem; margin-top: 3px; font-weight: 500; }
   .task-check {
@@ -206,7 +205,6 @@
   body.readonly .add-row { display: none; }
   body.readonly .task-check { cursor: default; pointer-events: none; }
   body.readonly .task-delete { display: none; }
-  body.readonly .nav-lock-btn { display: none; }
 
   @media (max-width: 680px) {
     nav { padding: 1rem 1.5rem; }
@@ -221,16 +219,16 @@
 <body>
 
 <!-- LOCK -->
-<div id="lockScreen">
+<div id="lockScreen" class="hidden">
   <div class="lock-card">
-    <div class="lock-icon">📋</div>
+    <div class="lock-icon">🔒</div>
     <h2 class="lock-title">Nathan's Tasks</h2>
-    <p class="lock-sub">Enter password to edit, or view as guest</p>
+    <p class="lock-sub">Enter password to edit</p>
     <input class="lock-input" type="password" id="pwInput" placeholder="••••••••"
       onkeydown="if(event.key==='Enter') checkPassword()"/>
     <button class="lock-btn" onclick="checkPassword()">Unlock to Edit</button>
     <p class="lock-error" id="pwError">Incorrect password — try again.</p>
-    <button class="view-only-btn" onclick="enterViewOnly()">👁 View only (no password)</button>
+    <button class="view-only-btn" onclick="closeLock()">Cancel</button>
    <p class="lock-hint">😼</p>
   </div>
 </div>
@@ -243,7 +241,7 @@
     <li><a href="index.html#goals">Goals</a></li>
     <li><a href="index.html#activities">Activities</a></li>
     <li><a href="todo.html" class="active">Daily Tasks</a></li>
-    <li><button class="nav-lock-btn" onclick="lockPage()">🔒 Lock</button></li>
+    <li><button class="nav-lock-btn" id="navLockBtn" onclick="navLockAction()">🔓 Unlock</button></li>
   </ul>
 </nav>
 
@@ -402,14 +400,25 @@
     }
   };
 
-  window.enterViewOnly = function() {
-    canEdit = false;
-    hideLock();
+  window.navLockAction = function() {
+    if (canEdit) {
+      // Currently editing — lock it
+      sessionStorage.removeItem(SESSION_KEY);
+      canEdit = false;
+      document.body.classList.add('readonly');
+      document.getElementById('modeBadge').innerHTML = '<span class="view-only-badge">👁 View only</span>';
+      document.getElementById('navLockBtn').textContent = '🔓 Unlock';
+    } else {
+      // Currently view-only — show password prompt
+      document.getElementById('lockScreen').classList.remove('hidden');
+      document.getElementById('pwInput').value = '';
+      document.getElementById('pwError').classList.remove('visible');
+      setTimeout(() => document.getElementById('pwInput').focus(), 50);
+    }
   };
 
-  window.lockPage = function() {
-    sessionStorage.removeItem(SESSION_KEY);
-    location.reload();
+  window.closeLock = function() {
+    document.getElementById('lockScreen').classList.add('hidden');
   };
 
   function hideLock() {
@@ -417,24 +426,27 @@
     if (canEdit) {
       document.body.classList.remove('readonly');
       document.getElementById('modeBadge').innerHTML = '<span class="edit-badge">✏️ Edit mode</span>';
+      document.getElementById('navLockBtn').textContent = '🔒 Lock';
     } else {
       document.body.classList.add('readonly');
       document.getElementById('modeBadge').innerHTML = '<span class="view-only-badge">👁 View only</span>';
+      document.getElementById('navLockBtn').textContent = '🔓 Unlock';
     }
-    initApp();
   }
 
-  // Auto-unlock if session active
+  // Always start in view-only, unless session already unlocked
   if (sessionStorage.getItem(SESSION_KEY) === '1') {
     canEdit = true;
     hideLock();
   } else {
-    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+    canEdit = false;
+    hideLock();
   }
+  initApp();
 
   // ── FIREBASE REFS ─────────────────────────────────────────
   const todayRef  = () => doc(db, 'tasks', todayStr());
-  const tmrwRef   = () => doc(db, 'tomorrow', 'queue'); // fixed doc — always the current tomorrow queue
+  const tmrwRef   = () => doc(db, 'tasks', tomorrowStr());
   const weekRef   = () => doc(db, 'weekly', weekKey());
   const archRef   = (dateStr) => doc(db, 'archive', dateStr);
 
@@ -492,7 +504,7 @@
       });
     }
 
-    // Carry unfinished yesterday tasks → today (merge), increment carryCount
+    // Carry unfinished yesterday tasks → today (merge)
     const todaySnap = await getDoc(todayRef());
     const existingToday = todaySnap.exists() ? (todaySnap.data().tasks || []) : [];
 
@@ -500,14 +512,19 @@
     if (ySnap.exists()) {
       carryOver = (ySnap.data().tasks || [])
         .filter(t => !t.done)
-        .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
+        .map(t => ({ ...t, carried: true, done: false }));
     }
 
-    // Merge tomorrow queue → today
-    const yesterdayTmrw = await getDoc(tmrwRef());
+    // Merge tomorrow tasks → today
+    const tmrwSnap = await getDoc(doc(db, 'tasks', yStr.replace(yStr, todayStr()))); // today's "tomorrow" file is actually today
+    // Get what WAS tomorrow (now today)
+    const prevTmrwSnap = await getDoc(tmrwRef());
+    // Actually: tomorrow tasks from yesterday = today's extra tasks
+    // We need yesterday's tomorrow doc
+    const yesterdayTmrw = await getDoc(doc(db, 'tasks', yStr + '_tomorrow'));
     let fromTmrw = [];
     if (yesterdayTmrw.exists()) {
-      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
+      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false }));
     }
 
     const merged = [...existingToday, ...carryOver, ...fromTmrw];
@@ -515,8 +532,8 @@
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
 
-    // Clear tomorrow queue for the new day
-    await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
+    // Clear tomorrow doc for the new day
+    await setDoc(doc(db, 'tasks', todayStr() + '_tomorrow'), { tasks: [], date: todayStr() });
 
     // Check weekly rollover (Sunday)
     const dayOfWeek = new Date().getDay();
@@ -542,7 +559,7 @@
     if (!prevSnap.exists()) return;
 
     const prevTasks = prevSnap.data().tasks || [];
-    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
+    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false }));
 
     const thisSnap = await getDoc(weekRef());
     const current = thisSnap.exists() ? (thisSnap.data().tasks || []) : [];
@@ -561,7 +578,7 @@
     if (!canEdit) return;
     let inputId, tasks, ref, syncId;
     if (type === 'today')   { inputId = 'todayInput';   tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ inputId = 'tomorrowInput'; tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { inputId = 'weeklyInput';  tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const input = document.getElementById(inputId);
@@ -583,7 +600,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
@@ -599,7 +616,7 @@
     if (!canEdit) return;
     let tasks, ref, syncId;
     if (type === 'today')   { tasks = todayTasks;   ref = todayRef();  syncId = 'todaySync'; }
-    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = tmrwRef();   syncId = 'tomorrowSync'; }
+    if (type === 'tomorrow'){ tasks = tomorrowTasks; ref = doc(db, 'tasks', todayStr() + '_tomorrow'); syncId = 'tomorrowSync'; }
     if (type === 'weekly')  { tasks = weeklyTasks;  ref = weekRef();   syncId = 'weeklySync'; }
 
     const updated = tasks.filter(t => t.id !== id);
@@ -620,15 +637,9 @@
     }
     tasks.forEach((t, i) => {
       const li = document.createElement('li');
-      const isMultiCarried = (t.carryCount || 0) >= 2;
-      li.className = 'task-item'
-        + (t.done ? ' done' : '')
-        + (t.carried ? ' carried' : '')
-        + (isMultiCarried ? ' multi-carried' : '');
+      li.className = 'task-item' + (t.done ? ' done' : '') + (t.carried ? ' carried' : '');
       const carriedTag = t.carried
-        ? (type === 'weekly'
-            ? `<span class="weekly-carried-tag">↩ carried${isMultiCarried ? ' ×' + t.carryCount : ''}</span>`
-            : `<span class="carried-tag">↩ carried${isMultiCarried ? ' ×' + t.carryCount : ''}</span>`)
+        ? (type === 'weekly' ? '<span class="weekly-carried-tag">↩ carried</span>' : '<span class="carried-tag">↩ carried</span>')
         : '';
       const editBtns = canEdit ? `
         <button class="task-check" onclick="toggleTask('${type}', ${t.id})">
