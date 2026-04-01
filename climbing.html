@@ -412,7 +412,6 @@
     const totalHrs   = sessions.reduce((s, r) => s + r.hours, 0);
     const totalHrsE  = sessions[0]?.totalHrs ?? totalHrs; // use sheet's Total (Hrs) if present in row 2
     const numSessions = sessions.length;
-    const sendDays   = sessions.filter(r => r.grade && r.grade !== '\u2014' && r.grade !== '').length;
     const v8PlusDays = sessions.filter(r => topGradeNum(r.grade) >= 8).length;
     const allScoreHrs = weeks.filter(w => w.scoreHr > 0).map(w => w.scoreHr);
     const avgScoreHr  = allScoreHrs.length ? (allScoreHrs.reduce((a,b)=>a+b,0)/allScoreHrs.length).toFixed(3) : '—';
@@ -421,7 +420,6 @@
       <div class="metric-card"><div class="metric-val">${totalHrsE ? totalHrsE.toFixed(1) : totalHrs.toFixed(1)}</div><div class="metric-label">Total Hours</div></div>
       <div class="metric-card"><div class="metric-val">${numSessions}</div><div class="metric-label">Sessions</div></div>
       <div class="metric-card green"><div class="metric-val">${v8PlusDays}</div><div class="metric-label">V8+ Send Days</div></div>
-      <div class="metric-card green"><div class="metric-val">${sendDays}</div><div class="metric-label">Days with Sends</div></div>
       <div class="metric-card"><div class="metric-val">${avgScoreHr}</div><div class="metric-label">Avg Score / Hr</div></div>
       <div class="metric-card"><div class="metric-val">${(totalHrs/numSessions).toFixed(1)}</div><div class="metric-label">Avg Hrs / Session</div></div>
     `;
