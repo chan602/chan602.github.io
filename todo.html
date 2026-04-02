@@ -537,14 +537,6 @@
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
 
-    // Save a dated snapshot of current tomorrow queue for tomorrow's rollover
-    const currentTmrw = await getDoc(tmrwRef());
-    const tmrwTasks = currentTmrw.exists() ? (currentTmrw.data().tasks || []) : [];
-    await setDoc(doc(db, 'tomorrow', todayStr()), { tasks: tmrwTasks, date: todayStr() });
-
-    // Clear the live tomorrow queue for fresh additions today
-    await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
-
     // Check weekly rollover (Sunday)
     const dayOfWeek = new Date().getDay();
     const lastWeekRollover = localStorage.getItem('nc_last_week_rollover');
@@ -585,7 +577,9 @@
       const snap = await getDoc(tmrwRef());
       const tasks = snap.exists() ? (snap.data().tasks || []) : [];
       await setDoc(doc(db, 'tomorrow', todayStr()), { tasks, date: todayStr() });
-      // Now clear the localStorage flag so rollover fires fresh
+      // Clear the live tomorrow queue for the new day
+      await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
+      // Clear localStorage flag so rollover fires fresh
       localStorage.removeItem('nc_last_rollover');
       checkRollover();
       scheduleMidnight();
