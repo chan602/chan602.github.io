@@ -137,6 +137,7 @@
   .task-item:last-child { border-bottom: none; }
   .task-item:hover { background: var(--bg); }
   .task-item.carried { opacity: 0.7; }
+  .task-item.multi-carried .task-text { font-weight: 700; }
 
   .task-num { font-size: 0.72rem; color: var(--muted); min-width: 1.4rem; margin-top: 3px; font-weight: 500; }
   .task-check {
@@ -650,9 +651,10 @@
     }
     tasks.forEach((t, i) => {
       const li = document.createElement('li');
-      li.className = 'task-item' + (t.done ? ' done' : '') + (t.carried ? ' carried' : '');
+      const isMultiCarried = (t.carryCount || 0) >= 2;
+      li.className = 'task-item' + (t.done ? ' done' : '') + (t.carried ? ' carried' : '') + (isMultiCarried ? ' multi-carried' : '');
       const carriedTag = t.carried
-        ? (type === 'weekly' ? '<span class="weekly-carried-tag">↩ carried</span>' : '<span class="carried-tag">↩ carried</span>')
+        ? (type === 'weekly' ? `<span class="weekly-carried-tag">↩ carried${isMultiCarried ? ' ×'+t.carryCount : ''}</span>` : `<span class="carried-tag">↩ carried${isMultiCarried ? ' ×'+t.carryCount : ''}</span>`)
         : '';
       const editBtns = canEdit ? `
         <button class="task-check" onclick="toggleTask('${type}', ${t.id})">
