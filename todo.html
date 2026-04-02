@@ -523,10 +523,11 @@
     }
 
     // Merge tomorrow queue → today
-    const yesterdayTmrw = await getDoc(tmrwRef());
+    // We use a dated snapshot saved at end of previous day, NOT the live queue
+    const yesterdayTmrwSnap = await getDoc(doc(db, 'tomorrow', yStr));
     let fromTmrw = [];
-    if (yesterdayTmrw.exists()) {
-      fromTmrw = (yesterdayTmrw.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
+    if (yesterdayTmrwSnap.exists()) {
+      fromTmrw = (yesterdayTmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
     }
 
     const allTasks = [...existingToday, ...carryOver, ...fromTmrw];
@@ -536,7 +537,12 @@
       await setDoc(todayRef(), { tasks: merged, date: todayStr() });
     }
 
-    // Clear tomorrow queue for the new day
+    // Save a dated snapshot of current tomorrow queue for tomorrow's rollover
+    const currentTmrw = await getDoc(tmrwRef());
+    const tmrwTasks = currentTmrw.exists() ? (currentTmrw.data().tasks || []) : [];
+    await setDoc(doc(db, 'tomorrow', todayStr()), { tasks: tmrwTasks, date: todayStr() });
+
+    // Clear the live tomorrow queue for fresh additions today
     await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
 
     // Check weekly rollover (Sunday)
@@ -574,7 +580,16 @@
     const now = new Date();
     const midnight = new Date(now); midnight.setHours(24, 0, 5, 0);
     const ms = midnight - now;
-    setTimeout(() => { checkRollover(); scheduleMidnight(); }, ms);
+    setTimeout(async () => {
+      // Save dated snapshot of tomorrow queue before rolling over
+      const snap = await getDoc(tmrwRef());
+      const tasks = snap.exists() ? (snap.data().tasks || []) : [];
+      await setDoc(doc(db, 'tomorrow', todayStr()), { tasks, date: todayStr() });
+      // Now clear the localStorage flag so rollover fires fresh
+      localStorage.removeItem('nc_last_rollover');
+      checkRollover();
+      scheduleMidnight();
+    }, ms);
   }
 
   // ── ADD TASKS ─────────────────────────────────────────────
