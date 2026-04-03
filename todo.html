@@ -486,71 +486,84 @@
 
     document.getElementById('appLoading').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
-
-    // Schedule midnight rollover check
-    scheduleMidnight();
   }
 
   // ── ROLLOVER ──────────────────────────────────────────────
+  // Single source of truth: Firebase meta/rollover document.
+  // All devices read the same flag — no localStorage dependency.
   async function checkRollover() {
-    const lastRollover = localStorage.getItem('nc_last_rollover');
     const today = todayStr();
-    if (lastRollover === today) return; // already rolled over today
 
-    // Archive yesterday's tasks if they exist
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    const yStr = yesterday.toLocaleDateString('en-CA');
-    const ySnap = await getDoc(doc(db, 'tasks', yStr));
-    if (ySnap.exists() && (ySnap.data().tasks || []).length > 0) {
-      const yTasks = ySnap.data().tasks;
-      const done = yTasks.filter(t => t.done).length;
-      await setDoc(archRef(yStr), {
-        date: yStr,
-        tasks: yTasks,
-        summary: `${done}/${yTasks.length} completed`,
-        archivedAt: Date.now()
+    // Read rollover state from Firebase (shared across all devices)
+    const metaSnap = await getDoc(doc(db, 'meta', 'rollover'));
+    const meta = metaSnap.exists() ? metaSnap.data() : {};
+
+    // ── DAILY ROLLOVER ────────────────────────────────────────
+    if (meta.lastRollover !== today) {
+
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yStr = yesterday.toLocaleDateString('en-CA');
+
+      // Archive yesterday's tasks
+      const ySnap = await getDoc(doc(db, 'tasks', yStr));
+      if (ySnap.exists() && (ySnap.data().tasks || []).length > 0) {
+        const yTasks = ySnap.data().tasks;
+        const done = yTasks.filter(t => t.done).length;
+        await setDoc(archRef(yStr), {
+          date: yStr,
+          tasks: yTasks,
+          summary: `${done}/${yTasks.length} completed`,
+          archivedAt: Date.now()
+        });
+      }
+
+      // Carry unfinished yesterday tasks → today
+      const todaySnap = await getDoc(todayRef());
+      const existingToday = todaySnap.exists() ? (todaySnap.data().tasks || []) : [];
+      let carryOver = [];
+      if (ySnap && ySnap.exists()) {
+        carryOver = (ySnap.data().tasks || [])
+          .filter(t => !t.done)
+          .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
+      }
+
+      // Merge yesterday's tomorrow snapshot → today
+      const tmrwSnap = await getDoc(doc(db, 'tomorrow', yStr));
+      let fromTmrw = [];
+      if (tmrwSnap.exists()) {
+        fromTmrw = (tmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
+      }
+
+      // Deduplicate by task id and save merged list
+      const allTasks = [...existingToday, ...carryOver, ...fromTmrw];
+      const seen = new Set();
+      const merged = allTasks.filter(t => seen.has(t.id) ? false : seen.add(t.id));
+      await setDoc(todayRef(), { tasks: merged, date: today });
+
+      // Save today's tomorrow queue as a dated snapshot for tomorrow's rollover
+      const currentTmrw = await getDoc(tmrwRef());
+      const tmrwTasks = currentTmrw.exists() ? (currentTmrw.data().tasks || []) : [];
+      await setDoc(doc(db, 'tomorrow', today), { tasks: tmrwTasks, date: today });
+
+      // Clear the live tomorrow queue for fresh additions today
+      await setDoc(tmrwRef(), { tasks: [], date: today });
+
+      // Mark daily rollover done in Firebase — all devices will now skip
+      await setDoc(doc(db, 'meta', 'rollover'), { ...meta, lastRollover: today });
+    }
+
+    // ── WEEKLY ROLLOVER (Sunday) ──────────────────────────────
+    const dayOfWeek = new Date().getDay();
+    if (dayOfWeek === 0 && meta.lastWeekRollover !== weekKey()) {
+      await weeklyRollover();
+      await setDoc(doc(db, 'meta', 'rollover'), {
+        lastRollover: today,
+        lastWeekRollover: weekKey()
       });
     }
-
-    // Carry unfinished yesterday tasks → today (merge)
-    const todaySnap = await getDoc(todayRef());
-    const existingToday = todaySnap.exists() ? (todaySnap.data().tasks || []) : [];
-
-    let carryOver = [];
-    if (ySnap.exists()) {
-      carryOver = (ySnap.data().tasks || [])
-        .filter(t => !t.done)
-        .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
-    }
-
-    // Merge tomorrow queue → today
-    // We use a dated snapshot saved at end of previous day, NOT the live queue
-    const yesterdayTmrwSnap = await getDoc(doc(db, 'tomorrow', yStr));
-    let fromTmrw = [];
-    if (yesterdayTmrwSnap.exists()) {
-      fromTmrw = (yesterdayTmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
-    }
-
-    const allTasks = [...existingToday, ...carryOver, ...fromTmrw];
-    const seen = new Set();
-    const merged = allTasks.filter(t => seen.has(t.id) ? false : seen.add(t.id));
-    if (merged.length > 0 || existingToday.length === 0) {
-      await setDoc(todayRef(), { tasks: merged, date: todayStr() });
-    }
-
-    // Check weekly rollover (Sunday)
-    const dayOfWeek = new Date().getDay();
-    const lastWeekRollover = localStorage.getItem('nc_last_week_rollover');
-    if (dayOfWeek === 0 && lastWeekRollover !== weekKey()) {
-      await weeklyRollover();
-      localStorage.setItem('nc_last_week_rollover', weekKey());
-    }
-
-    localStorage.setItem('nc_last_rollover', today);
   }
 
   async function weeklyRollover() {
-    // Get last week's data
     const prevWeek = new Date(); prevWeek.setDate(prevWeek.getDate() - 7);
     const prevDay = prevWeek.getDay();
     const prevSun = new Date(prevWeek); prevSun.setDate(prevWeek.getDate() - prevDay);
@@ -562,29 +575,10 @@
     if (!prevSnap.exists()) return;
 
     const prevTasks = prevSnap.data().tasks || [];
-    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false }));
-
+    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
     const thisSnap = await getDoc(weekRef());
     const current = thisSnap.exists() ? (thisSnap.data().tasks || []) : [];
     await setDoc(weekRef(), { tasks: [...unfinished, ...current], weekKey: weekKey() });
-  }
-
-  function scheduleMidnight() {
-    const now = new Date();
-    const midnight = new Date(now); midnight.setHours(24, 0, 5, 0);
-    const ms = midnight - now;
-    setTimeout(async () => {
-      // Save dated snapshot of tomorrow queue before rolling over
-      const snap = await getDoc(tmrwRef());
-      const tasks = snap.exists() ? (snap.data().tasks || []) : [];
-      await setDoc(doc(db, 'tomorrow', todayStr()), { tasks, date: todayStr() });
-      // Clear the live tomorrow queue for the new day
-      await setDoc(tmrwRef(), { tasks: [], date: todayStr() });
-      // Clear localStorage flag so rollover fires fresh
-      localStorage.removeItem('nc_last_rollover');
-      checkRollover();
-      scheduleMidnight();
-    }, ms);
   }
 
   // ── ADD TASKS ─────────────────────────────────────────────
