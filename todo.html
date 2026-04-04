@@ -190,13 +190,13 @@
   .view-all-btn { font-size: 0.8rem; color: var(--accent); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; }
   .history-day { margin-bottom: 0.5rem; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
   .history-day:last-child { margin-bottom: 0; }
-  /* Completion tier backgrounds */
-  .tier-1 .history-day-header { background: #ffffff; }
-  .tier-2 .history-day-header { background: #e8f5e9; border-left: 3px solid #a5d6a7; }
-  .tier-3 .history-day-header { background: #c8e6c9; border-left: 3px solid #66bb6a; }
-  .tier-4 .history-day-header { background: #a5d6a7; border-left: 3px solid #388e3c; }
-  .tier-4 .history-day-date { color: #1b5e20; }
-  .tier-4 .history-badge { color: #2e7d32; }
+  /* Completion tier — left border only */
+  .tier-1 .history-day-header { background: var(--card); border-left: 3px solid var(--line); }
+  .tier-2 .history-day-header { background: var(--card); border-left: 3px solid #a5d6a7; }
+  .tier-3 .history-day-header { background: var(--card); border-left: 3px solid #66bb6a; }
+  .tier-4 .history-day-header { background: var(--card); border-left: 3px solid #2e7d32; }
+  .tier-4 .history-day-date { color: #2e7d32; }
+  .tier-4 .history-badge { color: #388e3c; }
   .history-day-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.7rem 1rem; cursor: pointer; transition: background 0.15s;
