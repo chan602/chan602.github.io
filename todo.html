@@ -494,17 +494,19 @@
   async function checkRollover() {
     const today = todayStr();
 
-    // Read rollover state from Firebase (shared across all devices)
+    // Read rollover state from Firebase — single source of truth for all devices
     const metaSnap = await getDoc(doc(db, 'meta', 'rollover'));
     const meta = metaSnap.exists() ? metaSnap.data() : {};
 
     // ── DAILY ROLLOVER ────────────────────────────────────────
+    // Only runs once per day — first device to open the app after midnight triggers it.
+    // Firebase flag ensures all other devices skip.
     if (meta.lastRollover !== today) {
 
       const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
       const yStr = yesterday.toLocaleDateString('en-CA');
 
-      // Archive yesterday's tasks
+      // 1. Archive yesterday's tasks
       const ySnap = await getDoc(doc(db, 'tasks', yStr));
       if (ySnap.exists() && (ySnap.data().tasks || []).length > 0) {
         const yTasks = ySnap.data().tasks;
@@ -517,7 +519,7 @@
         });
       }
 
-      // Carry unfinished yesterday tasks → today
+      // 2. Carry unfinished yesterday tasks → today
       const todaySnap = await getDoc(todayRef());
       const existingToday = todaySnap.exists() ? (todaySnap.data().tasks || []) : [];
       let carryOver = [];
@@ -527,28 +529,23 @@
           .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
       }
 
-      // Merge yesterday's tomorrow snapshot → today
-      const tmrwSnap = await getDoc(doc(db, 'tomorrow', yStr));
-      let fromTmrw = [];
-      if (tmrwSnap.exists()) {
-        fromTmrw = (tmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }));
-      }
+      // 3. Pull tomorrow queue directly — safe because Firebase flag guarantees
+      //    this only runs once, so we can't accidentally pull tasks mid-day
+      const tmrwSnap = await getDoc(tmrwRef());
+      const fromTmrw = tmrwSnap.exists()
+        ? (tmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }))
+        : [];
 
-      // Deduplicate by task id and save merged list
+      // 4. Merge and deduplicate, then save as today's task list
       const allTasks = [...existingToday, ...carryOver, ...fromTmrw];
       const seen = new Set();
       const merged = allTasks.filter(t => seen.has(t.id) ? false : seen.add(t.id));
       await setDoc(todayRef(), { tasks: merged, date: today });
 
-      // Save today's tomorrow queue as a dated snapshot for tomorrow's rollover
-      const currentTmrw = await getDoc(tmrwRef());
-      const tmrwTasks = currentTmrw.exists() ? (currentTmrw.data().tasks || []) : [];
-      await setDoc(doc(db, 'tomorrow', today), { tasks: tmrwTasks, date: today });
-
-      // Clear the live tomorrow queue for fresh additions today
+      // 5. Clear the tomorrow queue so it's fresh for new additions today
       await setDoc(tmrwRef(), { tasks: [], date: today });
 
-      // Mark daily rollover done in Firebase — all devices will now skip
+      // 6. Mark rollover done — all other devices will now skip
       await setDoc(doc(db, 'meta', 'rollover'), { ...meta, lastRollover: today });
     }
 
