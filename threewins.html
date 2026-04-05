@@ -220,10 +220,12 @@
   body.readonly .task-check { cursor: default; pointer-events: none; }
   body.readonly .task-delete { display: none; }
   body.readonly .eval-btn { display: none; }
-  body.readonly .override-btn { display: none; }
+  body.readonly .override-btn { display: none !important; }
   body.readonly .d-task-tap { display: none; }
   body.readonly .d-task-delete { display: none; }
- #evalStatus { display: block !important; }
+  .override-btn { display: none; }
+  .wins-evaluated .override-btn { display: inline; }
+  #evalStatus { display: block !important; }
 
   /* D-TASK (daily repeat) */
   .d-task-item {
@@ -465,7 +467,7 @@
         </div>
         <div class="win-actions">
           <span class="win-badge pending" id="badge-physical">–</span>
-          <button class="override-btn" id="overrideBtn-physical" onclick="toggleOverride('physical')" style="display:none">Override</button>
+          <button class="override-btn" id="overrideBtn-physical" onclick="toggleOverride('physical')">Override</button>
         </div>
       </div>
 
@@ -481,7 +483,7 @@
         </div>
         <div class="win-actions">
           <span class="win-badge pending" id="badge-mental">–</span>
-          <button class="override-btn" id="overrideBtn-mental" onclick="toggleOverride('mental')" style="display:none">Override</button>
+          <button class="override-btn" id="overrideBtn-mental" onclick="toggleOverride('mental')">Override</button>
         </div>
       </div>
 
@@ -497,7 +499,7 @@
         </div>
         <div class="win-actions">
           <span class="win-badge pending" id="badge-spiritual">–</span>
-          <button class="override-btn" id="overrideBtn-spiritual" onclick="toggleOverride('spiritual')" style="display:none">Override</button>
+          <button class="override-btn" id="overrideBtn-spiritual" onclick="toggleOverride('spiritual')">Override</button>
         </div>
       </div>
     </div>
@@ -1323,10 +1325,15 @@
     todayWinsOverrides = { physical: data.overridePhysical ?? null, mental: data.overrideMental ?? null, spiritual: data.overrideSpiritual ?? null };
     todayWinsNotes = { physical: data.notePhysical ?? '', mental: data.noteMental ?? '', spiritual: data.noteSpiritual ?? '' };
     renderWinBadges(data.reasoning || '');
-    // Show override buttons if already evaluated
-   ['physical','mental','spiritual'].forEach(w => {
-  document.getElementById(`overrideBtn-${w}`).style.display = canEdit ? 'inline' : 'none';
-   });
+
+    // Set eval status from stored timestamp
+    if (data.evaluatedAt) {
+      const evalTime = new Date(data.evaluatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      document.getElementById('evalStatus').innerHTML = `Evaluated at ${evalTime} &nbsp;·&nbsp; <span style="font-size:0.75rem;opacity:0.6;">Powered by Claude AI</span>`;
+    }
+
+    // Show override buttons via class — CSS handles readonly hiding
+    document.getElementById('winsPanel').classList.add('wins-evaluated');
   }
 
   function renderWinBadges(reasoning) {
@@ -1436,9 +1443,7 @@ Respond ONLY with valid JSON, no other text:
       });
 
       renderWinBadges(result.reasoning || '');
-      ['physical','mental','spiritual'].forEach(w => {
-  document.getElementById(`overrideBtn-${w}`).style.display = canEdit ? 'inline' : 'none';
-});
+      document.getElementById('winsPanel').classList.add('wins-evaluated');
 
       // Update streak
       await updateStreak();
