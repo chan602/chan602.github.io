@@ -221,8 +221,59 @@
   body.readonly .task-delete { display: none; }
   body.readonly .eval-btn { display: none; }
   body.readonly .override-btn { display: none; }
+  body.readonly .d-task-tap { display: none; }
+  body.readonly .d-task-delete { display: none; }
 
-  /* THREE WINS ──────────────────────────────────────────────── */
+  /* D-TASK (daily repeat) */
+  .d-task-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--line);
+    transition: background 0.15s; border-radius: 3px;
+  }
+  .d-task-item:last-child { border-bottom: none; }
+  .d-task-item:hover { background: var(--bg); }
+  .d-task-num { font-size: 0.72rem; color: var(--muted); min-width: 1.4rem; font-weight: 500; }
+  .d-task-info { flex: 1; min-width: 0; }
+  .d-task-text { font-size: 0.9rem; color: var(--ink); margin-bottom: 0.2rem; }
+  .d-task-bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-bottom: 0.1rem; }
+  .d-task-bar-fill { height: 100%; background: var(--weekly-accent); border-radius: 2px; transition: width 0.3s ease; }
+  .d-task-count { font-size: 0.72rem; color: var(--muted); }
+  .d-task-actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+  .d-task-tap {
+    padding: 0.25rem 0.6rem; background: var(--weekly-accent); color: #fff;
+    border: none; border-radius: 4px; font-size: 0.75rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+  }
+  .d-task-tap:hover { background: #0a4a8a; }
+  .d-task-delete {
+    background: none; border: none; cursor: pointer; color: var(--line);
+    font-size: 1rem; transition: color 0.15s;
+  }
+  .d-task-delete:hover { color: #e05050; }
+
+  /* WEEKLY ARCHIVE ROW */
+  .week-group { margin-bottom: 1rem; }
+  .week-group-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 1rem; background: var(--ink); color: #fff;
+    border-radius: 6px 6px 0 0; cursor: pointer;
+  }
+  .week-group-header:hover { background: #1a2e42; }
+  .week-group-title { font-size: 0.85rem; font-weight: 500; }
+  .week-group-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(255,255,255,0.7); }
+  .week-group-expand { font-size: 0.68rem; color: rgba(255,255,255,0.5); transition: transform 0.25s; margin-left: 0.5rem; }
+  .week-group.open .week-group-expand { transform: rotate(180deg); }
+  .week-group-body { display: none; border: 1px solid var(--line); border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; }
+  .week-group.open .week-group-body { display: block; }
+  .week-summary-section { padding: 0.75rem 1rem; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .week-summary-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .week-d-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
+  .week-d-label { font-size: 0.82rem; color: var(--ink); flex: 1; }
+  .week-d-bar { width: 80px; height: 5px; background: var(--line); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .week-d-bar-fill { height: 100%; background: var(--weekly-accent); border-radius: 2px; }
+  .week-d-count { font-size: 0.75rem; color: var(--muted); min-width: 2.5rem; text-align: right; }
+  .week-w-row { font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; padding: 0.15rem 0; }
+  .week-wins-mini { display: flex; gap: 0.3rem; }
   .philosophy-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 6px;
     padding: 1.75rem 2rem; margin-bottom: 1.5rem; border-left: 3px solid var(--accent);
@@ -498,11 +549,24 @@
           </div>
           <div class="progress-bar"><div class="progress-fill progress-fill-weekly" id="weekProgressFill" style="width:0%"></div></div>
         </div>
+
+        <!-- W tasks (one-time weekly goals) -->
         <div class="add-row">
-          <input class="add-input" id="weeklyInput" placeholder="Add weekly task (W)…" onkeydown="if(event.key==='Enter') addTask('weekly')"/>
-          <button class="add-btn add-btn-weekly" onclick="addTask('weekly')">+ Weekly</button>
+          <input class="add-input" id="weeklyInput" placeholder="Add weekly goal (W)…" onkeydown="if(event.key==='Enter') addTask('weekly')"/>
+          <button class="add-btn add-btn-weekly" onclick="addTask('weekly')">+ W</button>
         </div>
         <ul class="task-list" id="weeklyList"></ul>
+
+        <!-- D tasks (daily repeat habits) -->
+        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--line);">
+          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Daily Habits (D)</div>
+          <div class="add-row">
+            <input class="add-input" id="dailyRepeatInput" placeholder="Add daily habit (D)…" onkeydown="if(event.key==='Enter') addDailyRepeat()"/>
+            <button class="add-btn add-btn-weekly" onclick="addDailyRepeat()">+ D</button>
+          </div>
+          <div id="dailyRepeatList"></div>
+        </div>
+
         <div class="sync-indicator" id="weeklySync"></div>
       </div>
     </div>
@@ -517,8 +581,9 @@
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
           <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
           <!-- ── RE-EVALUATE BUTTON — DELETE THIS BLOCK WHEN DONE ── -->
-          <button id="reEvalArchiveBtn" onclick="reEvaluateArchive()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">🔄 Re-evaluate Archive</button>
+          <button id="reEvalArchiveBtn" onclick="reEvaluateArchive()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">🔄 Re-evaluate Days</button>
           <!-- ── END RE-EVALUATE BUTTON ── -->
+          <button id="evalWeekBtn" onclick="evaluateWeek()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">⭐ Evaluate This Week</button>
         </div>
       </div>
       <div id="historyList"></div>
@@ -552,7 +617,7 @@
   // ── STATE ─────────────────────────────────────────────────
   let canEdit = false;
   let showAllHistory = false;
-  let todayTasks = [], tomorrowTasks = [], weeklyTasks = [], history = [];
+  let todayTasks = [], tomorrowTasks = [], weeklyTasks = [], dailyRepeatTasks = [], history = [], weeklyHistory = [];
   let syncTimer = null;
 
   // ── DATES ─────────────────────────────────────────────────
@@ -647,6 +712,8 @@
   const todayRef  = () => doc(db, 'tasks', todayStr());
   const tmrwRef = () => doc(db, 'tomorrow', 'queue');
   const weekRef   = () => doc(db, 'weekly', weekKey());
+  const dailyRepeatRef = () => doc(db, 'dailyRepeat', weekKey());
+  const weeklyArchiveRef = (wk) => doc(db, 'weeklyArchive', wk);
   const archRef   = (dateStr) => doc(db, 'archive', dateStr);
 
   // ── INIT ──────────────────────────────────────────────────
@@ -672,8 +739,14 @@
       renderWeekly();
     });
 
-    // Load history
-    await loadHistory();
+    // Daily repeat habits listener
+    onSnapshot(dailyRepeatRef(), snap => {
+      dailyRepeatTasks = snap.exists() ? (snap.data().tasks || []) : [];
+      renderDailyRepeats();
+    });
+
+    // Load history — loadWeeklyHistory calls loadHistory internally
+    await loadWeeklyHistory();
 
     // Load today's wins evaluation
     await loadTodayWins();
@@ -766,13 +839,34 @@
     const prevKey = `${prevSun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
 
     const prevSnap = await getDoc(doc(db, 'weekly', prevKey));
-    if (!prevSnap.exists()) return;
+    const prevRepeatSnap = await getDoc(doc(db, 'dailyRepeat', prevKey));
 
-    const prevTasks = prevSnap.data().tasks || [];
-    const unfinished = prevTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
-    const thisSnap = await getDoc(weekRef());
-    const current = thisSnap.exists() ? (thisSnap.data().tasks || []) : [];
-    await setDoc(weekRef(), { tasks: [...unfinished, ...current], weekKey: weekKey() });
+    // Archive the week's W and D tasks
+    const wTasks = prevSnap.exists() ? (prevSnap.data().tasks || []) : [];
+    const dTasks = prevRepeatSnap.exists() ? (prevRepeatSnap.data().tasks || []) : [];
+    if (wTasks.length > 0 || dTasks.length > 0) {
+      const wDone = wTasks.filter(t => t.done).length;
+      await setDoc(weeklyArchiveRef(prevKey), {
+        weekKey: prevKey,
+        weekStart: prevSun.toLocaleDateString('en-CA'),
+        wTasks,
+        dTasks,
+        summary: `${wDone}/${wTasks.length} weekly goals completed`,
+        archivedAt: Date.now()
+      });
+    }
+
+    // Carry unfinished W-tasks to next week
+    if (prevSnap.exists()) {
+      const unfinished = wTasks.filter(t => !t.done).map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
+      const thisSnap = await getDoc(weekRef());
+      const current = thisSnap.exists() ? (thisSnap.data().tasks || []) : [];
+      await setDoc(weekRef(), { tasks: [...unfinished, ...current], weekKey: weekKey() });
+    }
+
+    // Always reset D-tasks for new week — keep definitions, reset counts to 0
+    const newDTasks = dTasks.map(t => ({ ...t, count: 0 }));
+    await setDoc(dailyRepeatRef(), { tasks: newDTasks, weekKey: weekKey() });
   }
 
   // ── ADD TASKS ─────────────────────────────────────────────
@@ -883,10 +977,62 @@
     const done = weeklyTasks.filter(t => t.done).length;
     const total = weeklyTasks.length;
     const pct = total === 0 ? 0 : Math.round(done/total*100);
-    document.getElementById('weekProgressLabel').textContent = `${done} of ${total}`;
+    document.getElementById('weekProgressLabel').textContent = `${done} of ${total} W-tasks`;
     document.getElementById('weekProgressPct').textContent = `${pct}%`;
     document.getElementById('weekProgressFill').style.width = pct + '%';
     document.getElementById('weekMeta').textContent = weekRangeLabel();
+  }
+
+  // ── DAILY REPEAT (D) TASKS ────────────────────────────────
+  window.addDailyRepeat = async function() {
+    if (!canEdit) return;
+    const input = document.getElementById('dailyRepeatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    const newTask = { id: Date.now(), text, count: 0, createdAt: Date.now() };
+    const updated = [...dailyRepeatTasks, newTask];
+    await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
+  };
+
+  window.tapDailyRepeat = async function(id) {
+    if (!canEdit) return;
+    const updated = dailyRepeatTasks.map(t => t.id === id ? { ...t, count: Math.min((t.count || 0) + 1, 7) } : t);
+    await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
+  };
+
+  window.deleteDailyRepeat = async function(id) {
+    if (!canEdit) return;
+    const updated = dailyRepeatTasks.filter(t => t.id !== id);
+    await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
+  };
+
+  function renderDailyRepeats() {
+    const container = document.getElementById('dailyRepeatList');
+    if (!container) return;
+    container.innerHTML = '';
+    if (dailyRepeatTasks.length === 0) {
+      container.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);font-style:italic;padding:0.5rem 0;">No daily habits yet</div>';
+      return;
+    }
+    dailyRepeatTasks.forEach((t, i) => {
+      const pct = Math.round(((t.count || 0) / 7) * 100);
+      const div = document.createElement('div');
+      div.className = 'd-task-item';
+      div.innerHTML = `
+        <span class="d-task-num">D${i+1}</span>
+        <div class="d-task-info">
+          <div class="d-task-text">${escHtml(t.text)}</div>
+          <div class="d-task-bar"><div class="d-task-bar-fill" style="width:${pct}%"></div></div>
+          <div class="d-task-count">${t.count || 0}/7 days</div>
+        </div>
+        <div class="d-task-actions">
+          ${canEdit ? `<button class="d-task-tap" onclick="tapDailyRepeat(${t.id})">+1 day</button>` : ''}
+          ${canEdit ? `<button class="d-task-delete" onclick="deleteDailyRepeat(${t.id})">×</button>` : ''}
+        </div>
+      `;
+      container.appendChild(div);
+    });
   }
 
   // ── HISTORY ───────────────────────────────────────────────
@@ -898,20 +1044,38 @@
     const snap = await getDocs(q);
     history = snap.docs.map(d => d.data());
 
-    // Load wins data for each archived day
+    // Load daily wins data
     winsCache = {};
     await Promise.all(history.map(async day => {
       const wSnap = await getDoc(doc(db, 'wins', day.date));
       if (wSnap.exists()) winsCache[day.date] = wSnap.data();
     }));
 
+    // Load weekly wins data
+    await Promise.all(weeklyHistory.map(async week => {
+      const wSnap = await getDoc(doc(db, 'wins', 'week-' + week.weekKey));
+      if (wSnap.exists()) winsCache['week-' + week.weekKey] = wSnap.data();
+    }));
+
     renderHistory();
   }
+
+  async function loadWeeklyHistory() {
+    const q = query(collection(db, 'weeklyArchive'), orderBy('archivedAt', 'desc'), limit(showAllHistory ? 52 : 8));
+    const snap = await getDocs(q);
+    weeklyHistory = snap.docs.map(d => d.data());
+    // Now load history (which will also load weekly wins)
+    await loadHistory();
+  }
+
+  window.toggleWeekGroup = function(el) {
+    el.closest('.week-group').classList.toggle('open');
+  };
 
   window.toggleHistory = async function() {
     showAllHistory = !showAllHistory;
     document.getElementById('viewAllBtn').textContent = showAllHistory ? '← Recent only' : 'View all →';
-    await loadHistory();
+    await loadWeeklyHistory();
   };
 
   window.toggleHistoryDay = function(header) {
@@ -934,6 +1098,56 @@
     }).join('');
   }
 
+  function makeDayHTML(day) {
+    const tasks = day.tasks || [];
+    const done = tasks.filter(t => t.done).length;
+    const pct = tasks.length > 0 ? Math.round(done/tasks.length*100) : 0;
+    const tier = pct <= 25 ? 'tier-1' : pct <= 50 ? 'tier-2' : pct <= 75 ? 'tier-3' : 'tier-4';
+    const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US',
+      { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const winsData = winsCache[day.date] || null;
+    const allThree = winsData && isThreeWinDay(winsData);
+    const div = document.createElement('div');
+    div.className = `history-day ${tier}`;
+    div.innerHTML = `
+      <div class="history-day-header" onclick="toggleHistoryDay(this)">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span class="history-day-date">${dateLabel}</span>
+          <span class="history-badge">${done}/${tasks.length} · ${pct}%</span>
+          <span class="wins-badges">${winsMiniHTML(winsData)}</span>
+          ${allThree ? '<span style="font-size:0.75rem;color:#2e7d32;font-weight:500;">⭐</span>' : ''}
+        </div>
+        <span class="history-expand-icon">▼</span>
+      </div>
+      <div class="history-task-list">
+        ${tasks.map(t => {
+          const taskMap = winsData?.taskMap || {};
+          const winCat = taskMap[t.text];
+          const winIcons = { physical: '💪', mental: '🧠', spiritual: '🙏' };
+          const winIcon = winCat ? winIcons[winCat] : '';
+          return `
+          <div class="history-task">
+            <div class="h-dot ${t.done ? 'done' : 'undone'}"></div>
+            ${winIcon ? `<span style="font-size:0.85rem;opacity:0.8;">${winIcon}</span>` : '<span style="display:inline-block;width:1.2rem;"></span>'}
+            <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${escHtml(t.text)}</span>
+          </div>`;
+        }).join('')}
+        ${winsData?.reasoning ? `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line);font-size:0.8rem;color:var(--muted);"><em>${escHtml(winsData.reasoning)}</em></div>` : ''}
+        ${!winsData ? '<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">Not yet evaluated.</div>' : ''}
+      </div>
+    `;
+    return div;
+  }
+
+  function getWeekKeyForDate(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDay();
+    const sun = new Date(d); sun.setDate(d.getDate() - day);
+    const jan1 = new Date(sun.getFullYear(), 0, 1);
+    const wk = Math.ceil(((sun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    return `${sun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+  }
+
   function renderHistory() {
     const list = document.getElementById('historyList');
     const meta = document.getElementById('historyMeta');
@@ -941,61 +1155,95 @@
 
     list.innerHTML = '';
 
-    if (history.length === 0) {
+    if (history.length === 0 && weeklyHistory.length === 0) {
       meta.textContent = 'No archived days yet — days archive automatically at midnight.';
       viewBtn.style.display = 'none';
       return;
     }
 
-    meta.textContent = `${history.length} day${history.length !== 1 ? 's' : ''} archived`;
-    viewBtn.style.display = history.length > 7 ? 'inline' : 'none';
-    // Show re-evaluate button in edit mode if there's history
+    meta.textContent = `${history.length} day${history.length !== 1 ? 's' : ''} · ${weeklyHistory.length} week${weeklyHistory.length !== 1 ? 's' : ''} archived`;
+    viewBtn.style.display = (history.length > 7 || weeklyHistory.length > 4) ? 'inline' : 'none';
     const reEvalBtn = document.getElementById('reEvalArchiveBtn');
     if (reEvalBtn) reEvalBtn.style.display = (canEdit && history.length > 0) ? 'inline' : 'none';
+    const evalWeekBtn = document.getElementById('evalWeekBtn');
+    if (evalWeekBtn) evalWeekBtn.style.display = canEdit ? 'inline' : 'none';
 
+    // Group daily entries by week key
+    const daysByWeek = {};
     history.forEach(day => {
-      const tasks = day.tasks || [];
-      const done = tasks.filter(t => t.done).length;
-      const pct = tasks.length > 0 ? Math.round(done/tasks.length*100) : 0;
-      const tier = pct <= 25 ? 'tier-1' : pct <= 50 ? 'tier-2' : pct <= 75 ? 'tier-3' : 'tier-4';
-      const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US',
-        { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-      const winsData = winsCache[day.date] || null;
-      const winsHTML = winsMiniHTML(winsData);
-      const allThree = winsData && isThreeWinDay(winsData);
+      const wk = getWeekKeyForDate(day.date);
+      if (!daysByWeek[wk]) daysByWeek[wk] = [];
+      daysByWeek[wk].push(day);
+    });
 
-      const div = document.createElement('div');
-      div.className = `history-day ${tier}`;
-      div.innerHTML = `
-        <div class="history-day-header" onclick="toggleHistoryDay(this)">
-          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-            <span class="history-day-date">${dateLabel}</span>
-            <span class="history-badge">${done}/${tasks.length} completed · ${pct}%</span>
-            <span class="wins-badges">${winsMiniHTML(winsData)}</span>
-            ${allThree ? '<span style="font-size:0.75rem;color:#2e7d32;font-weight:500;">⭐ Three Wins</span>' : ''}
+    // Build a set of all week keys (from weekly archive + days)
+    const allWeekKeys = new Set([
+      ...weeklyHistory.map(w => w.weekKey),
+      ...Object.keys(daysByWeek)
+    ]);
+
+    // Sort weeks descending
+    const sortedWeeks = [...allWeekKeys].sort().reverse();
+
+    sortedWeeks.forEach(wk => {
+      const weekData = weeklyHistory.find(w => w.weekKey === wk) || null;
+      const days = (daysByWeek[wk] || []).sort((a,b) => b.date.localeCompare(a.date));
+
+      // Week wins from wins cache keyed as week-YYYY-WNN
+      const weekWinsData = winsCache['week-' + wk] || null;
+      const weekAllThree = weekWinsData && isThreeWinDay(weekWinsData);
+
+      // Week label
+      const weekLabel = weekData
+        ? `Week of ${new Date(weekData.weekStart + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : wk;
+
+      const group = document.createElement('div');
+      group.className = 'week-group';
+
+      // Week header
+      const winsHTML = weekWinsData ? winsMiniHTML(weekWinsData) : winsMiniHTML(null);
+      group.innerHTML = `
+        <div class="week-group-header" onclick="toggleWeekGroup(this)">
+          <span class="week-group-title">${weekLabel}</span>
+          <div class="week-group-meta">
+            <span class="week-wins-mini">${winsHTML}</span>
+            ${weekAllThree ? '<span style="color:#4caf50;">⭐ Three Wins Week</span>' : ''}
+            <span class="week-group-expand">▼</span>
           </div>
-          <span class="history-expand-icon">▼</span>
         </div>
-        <div class="history-task-list">
-          ${tasks.map(t => {
-            const taskMap = winsData?.taskMap || {};
-            const winCat = taskMap[t.text];
-            const winIcons = { physical: '💪', mental: '🧠', spiritual: '🙏' };
-            const winIcon = winCat ? winIcons[winCat] : '';
-            return `
-            <div class="history-task">
-              <div class="h-dot ${t.done ? 'done' : 'undone'}"></div>
-              ${winIcon ? `<span style="font-size:0.85rem;opacity:0.8;">${winIcon}</span>` : '<span style="display:inline-block;width:1.2rem;"></span>'}
-              <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${escHtml(t.text)}</span>
-            </div>`;
-          }).join('')}
-          ${winsData ? `
-            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line);font-size:0.8rem;color:var(--muted);">
-              ${winsData.reasoning ? `<em>${escHtml(winsData.reasoning)}</em>` : ''}
-            </div>` : '<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">Not yet evaluated — click Re-evaluate Archive to add win data.</div>'}
+        <div class="week-group-body">
+          ${weekData ? `
+          <div class="week-summary-section">
+            ${weekData.dTasks && weekData.dTasks.length > 0 ? `
+              <div class="week-summary-title">Daily Habits</div>
+              ${weekData.dTasks.map((t,i) => {
+                const pct = Math.round(((t.count||0)/7)*100);
+                return `<div class="week-d-row">
+                  <span class="week-d-label">D${i+1} — ${escHtml(t.text)}</span>
+                  <div class="week-d-bar"><div class="week-d-bar-fill" style="width:${pct}%"></div></div>
+                  <span class="week-d-count">${t.count||0}/7</span>
+                </div>`;
+              }).join('')}
+            ` : ''}
+            ${weekData.wTasks && weekData.wTasks.length > 0 ? `
+              <div class="week-summary-title" style="margin-top:0.5rem;">Weekly Goals</div>
+              ${weekData.wTasks.map((t,i) => `
+                <div class="week-w-row">
+                  <div class="h-dot ${t.done ? 'done' : 'undone'}" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;${t.done ? 'background:var(--accent)' : 'border:2px solid var(--line)'}"></div>
+                  <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">W${i+1} — ${escHtml(t.text)}</span>
+                </div>`).join('')}
+            ` : ''}
+            ${weekWinsData?.reasoning ? `<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">${escHtml(weekWinsData.reasoning)}</div>` : ''}
+          </div>` : ''}
+          <div id="days-${wk}"></div>
         </div>
       `;
-      list.appendChild(div);
+      list.appendChild(group);
+
+      // Add day rows inside the week group
+      const daysContainer = group.querySelector(`#days-${wk}`);
+      days.forEach(day => daysContainer.appendChild(makeDayHTML(day)));
     });
   }
 
@@ -1069,11 +1317,15 @@
     const btn = document.getElementById('evalBtn');
     const status = document.getElementById('evalStatus');
 
-    // Gather completed tasks from today + weekly
+    // Gather completed tasks from today + weekly + D-tasks
     const completed = [
       ...todayTasks.filter(t => t.done).map(t => t.text),
       ...weeklyTasks.filter(t => t.done).map(t => t.text)
     ];
+    // Include D-tasks that have meaningful completion (3+ days)
+    const dTaskContext = dailyRepeatTasks.length > 0
+      ? '\n\nDaily habits this week:\n' + dailyRepeatTasks.map((t,i) => `D${i+1}: ${t.text} — completed ${t.count||0}/7 days`).join('\n')
+      : '';
 
     if (completed.length === 0) {
       status.textContent = 'No completed tasks to evaluate yet.';
@@ -1087,7 +1339,7 @@
     const prompt = `You are evaluating whether someone achieved their Three Wins today based on their completed tasks.
 
 Completed tasks today:
-${completed.map((t, i) => `${i+1}. ${t}`).join('\n')}
+${completed.map((t, i) => `${i+1}. ${t}`).join('\n')}${dTaskContext}
 
 Definitions:
 - Physical win: any meaningful physical activity (climbing, gym, run, MMA, workout, sports, etc.)
@@ -1095,8 +1347,8 @@ Definitions:
 - Spiritual win: journaling, meditation, prayer, sleeping early, meaningful reflection, gratitude, etc.
 
 Note: routine hygiene tasks (shower, eat, etc.) should NOT count as wins and should map to null.
-
-For taskMap, assign each task to "physical", "mental", "spiritual", or null (for routine/uncategorized tasks).
+Daily habits with 1+ completions this week count toward wins.
+For taskMap, assign each task to "physical", "mental", "spiritual", or null.
 
 Respond ONLY with valid JSON, no other text:
 {"physical": true or false, "mental": true or false, "spiritual": true or false, "reasoning": "one or two sentence explanation", "taskMap": {"task text": "physical"|"mental"|"spiritual"|null}}`;
@@ -1242,7 +1494,68 @@ Respond ONLY with valid JSON, no other text:
   // ── READONLY: hide eval button and override buttons ────────
   // Already handled by canEdit checks inline
 
-  // ── RE-EVALUATE ARCHIVE (TEMPORARY — DELETE FROM HERE) ───────────────────
+  // ── WEEKLY EVALUATION ─────────────────────────────────────
+  window.evaluateWeek = async function() {
+    if (!canEdit) return;
+    const btn = document.getElementById('evalWeekBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Evaluating week…';
+
+    // Build weekly context
+    const wCompleted = weeklyTasks.filter(t => t.done).map((t,i) => `W${i+1}: ${t.text}`);
+    const dContext = dailyRepeatTasks.map((t,i) => `D${i+1}: ${t.text} — ${t.count||0}/7 days this week`);
+
+    if (wCompleted.length === 0 && dContext.length === 0) {
+      btn.textContent = '⭐ Evaluate This Week';
+      btn.disabled = false;
+      return;
+    }
+
+    const prompt = `Evaluate Three Wins for this week based on weekly goals and daily habits.
+
+Weekly goals completed:
+${wCompleted.length > 0 ? wCompleted.join('\n') : '(none)'}
+
+Daily habits this week:
+${dContext.length > 0 ? dContext.join('\n') : '(none)'}
+
+Definitions:
+- Physical win: climbing, gym, run, MMA, workout, or daily habit involving physical activity 3+ days
+- Mental win: studying, research, academic work, or consistent intellectual daily habit
+- Spiritual win: journaling, meditation, prayer, sleep discipline, or consistent reflective habit
+
+Respond ONLY valid JSON:
+{"physical": bool, "mental": bool, "spiritual": bool, "reasoning": "one or two sentences about the week"}`;
+
+    try {
+      const res = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      const result = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g,'').trim());
+
+      // Save under week key
+      await setDoc(doc(db, 'wins', 'week-' + weekKey()), {
+        weekKey: weekKey(),
+        physical: result.physical,
+        mental: result.mental,
+        spiritual: result.spiritual,
+        reasoning: result.reasoning || '',
+        evaluatedAt: Date.now(),
+        overridePhysical: null, overrideMental: null, overrideSpiritual: null,
+      });
+
+      winsCache['week-' + weekKey()] = result;
+      renderHistory();
+      alert(`Week evaluated! 💪${result.physical?'✓':'✗'} 🧠${result.mental?'✓':'✗'} 🙏${result.spiritual?'✓':'✗'}\n\n${result.reasoning}`);
+    } catch(e) {
+      console.error(e);
+      alert('Error evaluating week — try again.');
+    }
+    btn.disabled = false;
+    btn.textContent = '⭐ Evaluate This Week';
+  };
   window.reEvaluateArchive = async function() {
     if (!canEdit) return;
     const btn = document.getElementById('reEvalArchiveBtn');
