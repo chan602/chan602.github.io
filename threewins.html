@@ -580,10 +580,7 @@
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
           <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
-          <!-- ── RE-EVALUATE BUTTON — DELETE THIS BLOCK WHEN DONE ── -->
-          <button id="reEvalArchiveBtn" onclick="reEvaluateArchive()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">🔄 Re-evaluate Days</button>
-          <!-- ── END RE-EVALUATE BUTTON ── -->
-          <button id="evalWeekBtn" onclick="evaluateWeek()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">⭐ Evaluate This Week</button>
+          <button id="evalWeekBtn" onclick="evaluateWeek()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">⭐ Evaluate Week</button>
         </div>
       </div>
       <div id="historyList"></div>
@@ -1204,8 +1201,6 @@
 
     meta.textContent = `${history.length} day${history.length !== 1 ? 's' : ''} · ${weeklyHistory.length} week${weeklyHistory.length !== 1 ? 's' : ''} archived`;
     viewBtn.style.display = (history.length > 7 || weeklyHistory.length > 4) ? 'inline' : 'none';
-    const reEvalBtn = document.getElementById('reEvalArchiveBtn');
-    if (reEvalBtn) reEvalBtn.style.display = (canEdit && history.length > 0) ? 'inline' : 'none';
     const evalWeekBtn = document.getElementById('evalWeekBtn');
     if (evalWeekBtn) evalWeekBtn.style.display = canEdit ? 'inline' : 'none';
 
@@ -1536,37 +1531,80 @@ Respond ONLY with valid JSON, no other text:
   // Already handled by canEdit checks inline
 
   // ── WEEKLY EVALUATION ─────────────────────────────────────
+  // ── EVALUATE WEEK ─────────────────────────────────────────
+  // Step 1: re-evaluate any un-evaluated archive days
+  // Step 2: evaluate the whole week using W + D tasks
   window.evaluateWeek = async function() {
     if (!canEdit) return;
     const btn = document.getElementById('evalWeekBtn');
     btn.disabled = true;
+
+    // ── STEP 1: Re-evaluate un-evaluated archive days ─────────
+    const daysToEval = history.filter(day => !winsCache[day.date]);
+    if (daysToEval.length > 0) {
+      btn.textContent = `⏳ Evaluating days (0/${daysToEval.length})…`;
+      let done = 0;
+      for (const day of daysToEval) {
+        const tasks = (day.tasks || []).filter(t => t.done).map(t => t.text);
+        if (tasks.length === 0) { done++; continue; }
+        const prompt = `Evaluate Three Wins for ${day.date}.
+Completed tasks:\n${tasks.map((t,i)=>`${i+1}. ${t}`).join('\n')}
+Physical: climbing, gym, run, MMA, workout, sports.
+Mental: studying, research, academic, goal-directed work.
+Spiritual: journaling, meditation, prayer, sleeping early, reflection.
+Routine tasks (shower, eat, etc.) = null in taskMap.
+Respond ONLY valid JSON: {"physical":bool,"mental":bool,"spiritual":bool,"reasoning":"brief","taskMap":{"task text":"physical"|"mental"|"spiritual"|null}}`;
+        try {
+          const res = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
+          });
+          const data = await res.json();
+          const text = (data.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
+          const result = JSON.parse(text);
+          await setDoc(doc(db, 'wins', day.date), {
+            date: day.date, physical: result.physical, mental: result.mental, spiritual: result.spiritual,
+            reasoning: result.reasoning || '', taskMap: result.taskMap || {}, evaluatedAt: Date.now(),
+            overridePhysical: null, overrideMental: null, overrideSpiritual: null,
+          });
+          winsCache[day.date] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
+          done++;
+          btn.textContent = `⏳ Days: ${done}/${daysToEval.length}…`;
+          await new Promise(r => setTimeout(r, 600));
+        } catch(e) { console.error(`Failed day ${day.date}:`, e); }
+      }
+      await updateStreak();
+      renderHistory();
+    }
+
+    // ── STEP 2: Evaluate the whole week ──────────────────────
     btn.textContent = '⏳ Evaluating week…';
-
-    // Build weekly context
     const wCompleted = weeklyTasks.filter(t => t.done).map((t,i) => `W${i+1}: ${t.text}`);
-    const dContext = dailyRepeatTasks.map((t,i) => `D${i+1}: ${t.text} — ${t.count||0}/7 days this week`);
+    const wIncomplete = weeklyTasks.filter(t => !t.done).map((t,i) => `W${i+1}: ${t.text} (incomplete)`);
+    const dContext = dailyRepeatTasks.map((t,i) => `D${i+1}: ${t.text} — ${t.count||0}/7 days`);
 
-    if (wCompleted.length === 0 && dContext.length === 0) {
-      btn.textContent = '⭐ Evaluate This Week';
+    const hasContent = wCompleted.length > 0 || dContext.length > 0 || wIncomplete.length > 0;
+    if (!hasContent) {
       btn.disabled = false;
+      btn.textContent = '⭐ Evaluate Week';
       return;
     }
 
-    const prompt = `Evaluate Three Wins for this week based on weekly goals and daily habits.
+    const prompt = `Evaluate Three Wins for this week based on completed weekly goals and daily habits.
 
-Weekly goals completed:
-${wCompleted.length > 0 ? wCompleted.join('\n') : '(none)'}
+Weekly goals:
+${[...wCompleted, ...wIncomplete].length > 0 ? [...wCompleted, ...wIncomplete].join('\n') : '(none)'}
 
-Daily habits this week:
+Daily habits:
 ${dContext.length > 0 ? dContext.join('\n') : '(none)'}
 
 Definitions:
-- Physical win: climbing, gym, run, MMA, workout, or daily habit involving physical activity 3+ days
-- Mental win: studying, research, academic work, or consistent intellectual daily habit
-- Spiritual win: journaling, meditation, prayer, sleep discipline, or consistent reflective habit
+- Physical win: any physical activity task completed, or daily physical habit done 3+ days
+- Mental win: academic, research, or goal-directed work completed, or intellectual habit 3+ days
+- Spiritual win: journaling, meditation, prayer, sleep discipline, or reflective habit 3+ days
 
-Respond ONLY valid JSON:
-{"physical": bool, "mental": bool, "spiritual": bool, "reasoning": "one or two sentences about the week"}`;
+Respond ONLY valid JSON — no other text:
+{"physical": true or false, "mental": true or false, "spiritual": true or false, "reasoning": "one to two sentences summarizing the week"}`;
 
     try {
       const res = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
@@ -1574,73 +1612,29 @@ Respond ONLY valid JSON:
         body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
       });
       const data = await res.json();
-      const result = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g,'').trim());
+      if (!res.ok) throw new Error(`API error ${res.status}: ${JSON.stringify(data)}`);
+      const text = (data.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
+      if (!text) throw new Error('Empty response from API');
+      const result = JSON.parse(text);
 
-      // Save under week key
       await setDoc(doc(db, 'wins', 'week-' + weekKey()), {
         weekKey: weekKey(),
-        physical: result.physical,
-        mental: result.mental,
-        spiritual: result.spiritual,
+        physical: result.physical, mental: result.mental, spiritual: result.spiritual,
         reasoning: result.reasoning || '',
         evaluatedAt: Date.now(),
         overridePhysical: null, overrideMental: null, overrideSpiritual: null,
       });
-
-      winsCache['week-' + weekKey()] = result;
+      winsCache['week-' + weekKey()] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
       renderHistory();
-      alert(`Week evaluated! 💪${result.physical?'✓':'✗'} 🧠${result.mental?'✓':'✗'} 🙏${result.spiritual?'✓':'✗'}\n\n${result.reasoning}`);
+      alert(`Week evaluated!\n💪 ${result.physical?'✓':'✗'}  🧠 ${result.mental?'✓':'✗'}  🙏 ${result.spiritual?'✓':'✗'}\n\n${result.reasoning}`);
     } catch(e) {
-      console.error(e);
-      alert('Error evaluating week — try again.');
+      console.error('evaluateWeek error:', e);
+      alert('Error evaluating week — check console for details.');
     }
-    btn.disabled = false;
-    btn.textContent = '⭐ Evaluate This Week';
-  };
-  window.reEvaluateArchive = async function() {
-    if (!canEdit) return;
-    const btn = document.getElementById('reEvalArchiveBtn');
-    const daysToEval = history.filter(day => !winsCache[day.date]);
-    if (daysToEval.length === 0) { alert('All archived days already have win data!'); return; }
-    if (!confirm(`Re-evaluate ${daysToEval.length} archived day(s) with AI? This will make ${daysToEval.length} API calls.`)) return;
 
-    btn.disabled = true;
-    let done = 0;
-    for (const day of daysToEval) {
-      const tasks = (day.tasks || []).filter(t => t.done).map(t => t.text);
-      if (tasks.length === 0) { done++; continue; }
-      const prompt = `Evaluate Three Wins for ${day.date}.
-Completed tasks:\n${tasks.map((t,i)=>`${i+1}. ${t}`).join('\n')}
-Physical win: climbing, gym, run, MMA, workout, sports.
-Mental win: studying, research, academic, goal work.
-Spiritual win: journaling, meditation, prayer, sleeping early, reflection.
-Routine tasks (shower, eat, etc.) = null.
-Respond ONLY valid JSON: {"physical":bool,"mental":bool,"spiritual":bool,"reasoning":"brief","taskMap":{"task":"physical"|"mental"|"spiritual"|null}}`;
-      try {
-        const res = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
-        });
-        const data = await res.json();
-        const result = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g,'').trim());
-        await setDoc(doc(db, 'wins', day.date), {
-          date: day.date, physical: result.physical, mental: result.mental, spiritual: result.spiritual,
-          reasoning: result.reasoning || '', taskMap: result.taskMap || {}, evaluatedAt: Date.now(),
-          overridePhysical: null, overrideMental: null, overrideSpiritual: null,
-        });
-        winsCache[day.date] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
-        done++;
-        btn.textContent = `⏳ ${done}/${daysToEval.length}…`;
-        await new Promise(r => setTimeout(r, 600));
-      } catch(e) { console.error(`Failed ${day.date}:`, e); }
-    }
     btn.disabled = false;
-    btn.textContent = '🔄 Re-evaluate Archive';
-    await updateStreak();
-    renderHistory();
-    alert(`Done! Evaluated ${done} day(s).`);
+    btn.textContent = '⭐ Evaluate Week';
   };
-  // ── END RE-EVALUATE ARCHIVE (DELETE TO HERE) ──────────────────────────────
 
 </script>
 </body>
