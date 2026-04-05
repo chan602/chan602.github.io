@@ -1061,10 +1061,51 @@
   }
 
   async function loadWeeklyHistory() {
+    // Load formally archived weeks
     const q = query(collection(db, 'weeklyArchive'), orderBy('archivedAt', 'desc'), limit(showAllHistory ? 52 : 8));
     const snap = await getDocs(q);
     weeklyHistory = snap.docs.map(d => d.data());
-    // Now load history (which will also load weekly wins)
+
+    // Backfill: also check weekly/YYYY-WNN documents that predate the archive system.
+    // Build set of week keys already covered by formal archive
+    const archivedKeys = new Set(weeklyHistory.map(w => w.weekKey));
+
+    // Look at past ~12 weeks and pull any that aren't already archived
+    const weeksToCheck = [];
+    for (let i = 1; i <= 12; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - (i * 7));
+      const day = d.getDay();
+      const sun = new Date(d); sun.setDate(d.getDate() - day);
+      const jan1 = new Date(sun.getFullYear(), 0, 1);
+      const wk = Math.ceil(((sun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+      const wkKey = `${sun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+      if (!archivedKeys.has(wkKey)) weeksToCheck.push({ wkKey, sun });
+    }
+
+    // Fetch any that have data in the weekly collection
+    await Promise.all(weeksToCheck.map(async ({ wkKey, sun }) => {
+      const wSnap = await getDoc(doc(db, 'weekly', wkKey));
+      if (wSnap.exists()) {
+        const wTasks = wSnap.data().tasks || [];
+        if (wTasks.length > 0) {
+          const wDone = wTasks.filter(t => t.done).length;
+          weeklyHistory.push({
+            weekKey: wkKey,
+            weekStart: sun.toLocaleDateString('en-CA'),
+            wTasks,
+            dTasks: [], // pre-dates D-task system
+            summary: `${wDone}/${wTasks.length} weekly goals completed`,
+            archivedAt: sun.getTime(), // use week start as sort key
+            backfilled: true
+          });
+        }
+      }
+    }));
+
+    // Sort by archivedAt descending
+    weeklyHistory.sort((a, b) => b.archivedAt - a.archivedAt);
+
     await loadHistory();
   }
 
