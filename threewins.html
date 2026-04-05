@@ -1528,16 +1528,16 @@ Respond ONLY with valid JSON, no other text:
     if (todayIsWin) {
       // Only update if we haven't already counted today
       if (lastWinDate !== todayStr()) {
-        // Check if streak is continuous
+        // Check if streak is continuous from yesterday
         current = (lastWinDate === yStr) ? current + 1 : 1;
         total = (total || 0) + 1;
         best = Math.max(best || 0, current);
         lastWinDate = todayStr();
       }
-    } else {
-      // Not a win day — break streak if it was running
-      if (lastWinDate === yStr) current = 0;
     }
+    // Note: we never break the streak mid-day.
+    // Streak only breaks naturally when a new day starts and
+    // the previous day wasn't a win (lastWinDate falls behind yesterday).
 
     await setDoc(streakRef(), { current, total, best, lastWinDate });
     document.getElementById('streakCurrent').textContent = current;
