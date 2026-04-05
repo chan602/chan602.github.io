@@ -188,7 +188,20 @@
   .history-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; }
   .history-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; }
   .view-all-btn { font-size: 0.8rem; color: var(--accent); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; }
-  .history-day { margin-bottom: 1.2rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+  .history-day { margin-bottom: 0.5rem; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .history-day:last-child { margin-bottom: 0; }
+  .history-day-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.7rem 1rem; cursor: pointer; transition: background 0.15s;
+    background: var(--card);
+  }
+  .history-day-header:hover { background: var(--bg); }
+  .history-day-date { font-size: 0.88rem; font-weight: 500; color: var(--ink); }
+  .history-badge { font-size: 0.8rem; color: var(--muted); }
+  .history-expand-icon { font-size: 0.68rem; color: var(--muted); transition: transform 0.25s; margin-left: 0.5rem; flex-shrink: 0; }
+  .history-day.open .history-expand-icon { transform: rotate(180deg); }
+  .history-task-list { display: none; border-top: 1px solid var(--line); padding: 0.6rem 1rem 0.8rem; background: var(--bg); }
+  .history-day.open .history-task-list { display: block; }
   .history-day:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
   .history-day-header { display: flex; justify-content: space-between; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
   .history-badge { background: var(--done-bg); color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 20px; text-transform: none; letter-spacing: 0; }
@@ -518,7 +531,7 @@
   // ── CONFIG ────────────────────────────────────────────────
   const PASSWORD = 'meow'; // ← change your password here
   const SESSION_KEY = 'nc_unlocked';
-  const ANTHROPIC_KEY = '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'; // ← paste your sk-ant-... key here
+  const ANTHROPIC_KEY = 'YOUR_API_KEY_HERE'; // ← paste your sk-ant-... key here
 
   const firebaseConfig = {
     apiKey: "AIzaSyCGviyNZCiX5eAzjvV4qWIBGS3OD4sStVM",
