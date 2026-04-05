@@ -514,7 +514,12 @@
           <h2 class="history-title">Archive</h2>
           <p id="historyMeta" style="font-size:0.78rem; color:var(--muted); margin-top:0.15rem;">No archived days yet — days archive automatically at midnight.</p>
         </div>
-        <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
+          <!-- ── RE-EVALUATE BUTTON — DELETE THIS BLOCK WHEN DONE ── -->
+          <button id="reEvalArchiveBtn" onclick="reEvaluateArchive()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">🔄 Re-evaluate Archive</button>
+          <!-- ── END RE-EVALUATE BUTTON ── -->
+        </div>
       </div>
       <div id="historyList"></div>
     </div>
@@ -914,16 +919,18 @@
   };
 
   function winsMiniHTML(winsData) {
-    if (!winsData) return '';
+    // Always show all 3 wins with ✓ or ✗
     const wins = ['physical','mental','spiritual'];
     const icons = { physical: '💪', mental: '🧠', spiritual: '🙏' };
     return wins.map(w => {
+      if (!winsData) return `<span class="wins-mini-badge x" title="${w}">${icons[w]} ✗</span>`;
       const override = winsData[`override${w.charAt(0).toUpperCase()+w.slice(1)}`];
       const ai = winsData[w];
       const effective = (override !== null && override !== undefined) ? override : ai;
       const cls = effective ? 'w' : 'x';
+      const tick = effective ? '✓' : '✗';
       const ovTag = (override !== null && override !== undefined) ? ' ov' : '';
-      return `<span class="wins-mini-badge ${cls}${ovTag}" title="${w}">${icons[w]}</span>`;
+      return `<span class="wins-mini-badge ${cls}${ovTag}" title="${w}">${icons[w]} ${tick}</span>`;
     }).join('');
   }
 
@@ -942,6 +949,9 @@
 
     meta.textContent = `${history.length} day${history.length !== 1 ? 's' : ''} archived`;
     viewBtn.style.display = history.length > 7 ? 'inline' : 'none';
+    // Show re-evaluate button in edit mode if there's history
+    const reEvalBtn = document.getElementById('reEvalArchiveBtn');
+    if (reEvalBtn) reEvalBtn.style.display = (canEdit && history.length > 0) ? 'inline' : 'none';
 
     history.forEach(day => {
       const tasks = day.tasks || [];
@@ -961,25 +971,28 @@
           <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
             <span class="history-day-date">${dateLabel}</span>
             <span class="history-badge">${done}/${tasks.length} completed · ${pct}%</span>
-            ${winsHTML ? `<span class="wins-badges">${winsHTML}</span>` : ''}
+            <span class="wins-badges">${winsMiniHTML(winsData)}</span>
             ${allThree ? '<span style="font-size:0.75rem;color:#2e7d32;font-weight:500;">⭐ Three Wins</span>' : ''}
           </div>
           <span class="history-expand-icon">▼</span>
         </div>
         <div class="history-task-list">
-          ${tasks.map(t => `
+          ${tasks.map(t => {
+            const taskMap = winsData?.taskMap || {};
+            const winCat = taskMap[t.text];
+            const winIcons = { physical: '💪', mental: '🧠', spiritual: '🙏' };
+            const winIcon = winCat ? winIcons[winCat] : '';
+            return `
             <div class="history-task">
               <div class="h-dot ${t.done ? 'done' : 'undone'}"></div>
+              ${winIcon ? `<span style="font-size:0.85rem;opacity:0.8;">${winIcon}</span>` : '<span style="display:inline-block;width:1.2rem;"></span>'}
               <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">${escHtml(t.text)}</span>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
           ${winsData ? `
             <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line);font-size:0.8rem;color:var(--muted);">
-              <strong style="color:var(--ink);">3 Wins:</strong>
-              💪 ${winsData.overridePhysical !== null && winsData.overridePhysical !== undefined ? (winsData.overridePhysical ? '✓ (override)' : '✗ (override)') : (winsData.physical ? '✓' : '✗')} &nbsp;
-              🧠 ${winsData.overrideMental !== null && winsData.overrideMental !== undefined ? (winsData.overrideMental ? '✓ (override)' : '✗ (override)') : (winsData.mental ? '✓' : '✗')} &nbsp;
-              🙏 ${winsData.overrideSpiritual !== null && winsData.overrideSpiritual !== undefined ? (winsData.overrideSpiritual ? '✓ (override)' : '✗ (override)') : (winsData.spiritual ? '✓' : '✗')}
-              ${winsData.reasoning ? `<br/><em>${escHtml(winsData.reasoning)}</em>` : ''}
-            </div>` : ''}
+              ${winsData.reasoning ? `<em>${escHtml(winsData.reasoning)}</em>` : ''}
+            </div>` : '<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">Not yet evaluated — click Re-evaluate Archive to add win data.</div>'}
         </div>
       `;
       list.appendChild(div);
@@ -1081,10 +1094,12 @@ Definitions:
 - Mental win: academic work, studying, learning, goal-directed professional tasks, research, etc.
 - Spiritual win: journaling, meditation, prayer, sleeping early, meaningful reflection, gratitude, etc.
 
-Note: routine hygiene tasks (shower, eat, etc.) should NOT count as wins.
+Note: routine hygiene tasks (shower, eat, etc.) should NOT count as wins and should map to null.
+
+For taskMap, assign each task to "physical", "mental", "spiritual", or null (for routine/uncategorized tasks).
 
 Respond ONLY with valid JSON, no other text:
-{"physical": true or false, "mental": true or false, "spiritual": true or false, "reasoning": "one or two sentence explanation of your assessment"}`;
+{"physical": true or false, "mental": true or false, "spiritual": true or false, "reasoning": "one or two sentence explanation", "taskMap": {"task text": "physical"|"mental"|"spiritual"|null}}`;
 
     try {
       const response = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
@@ -1111,6 +1126,7 @@ Respond ONLY with valid JSON, no other text:
         mental: result.mental,
         spiritual: result.spiritual,
         reasoning: result.reasoning || '',
+        taskMap: result.taskMap || {},
         evaluatedAt: Date.now(),
         overridePhysical: todayWinsOverrides.physical,
         overrideMental: todayWinsOverrides.mental,
@@ -1225,6 +1241,52 @@ Respond ONLY with valid JSON, no other text:
 
   // ── READONLY: hide eval button and override buttons ────────
   // Already handled by canEdit checks inline
+
+  // ── RE-EVALUATE ARCHIVE (TEMPORARY — DELETE FROM HERE) ───────────────────
+  window.reEvaluateArchive = async function() {
+    if (!canEdit) return;
+    const btn = document.getElementById('reEvalArchiveBtn');
+    const daysToEval = history.filter(day => !winsCache[day.date]);
+    if (daysToEval.length === 0) { alert('All archived days already have win data!'); return; }
+    if (!confirm(`Re-evaluate ${daysToEval.length} archived day(s) with AI? This will make ${daysToEval.length} API calls.`)) return;
+
+    btn.disabled = true;
+    let done = 0;
+    for (const day of daysToEval) {
+      const tasks = (day.tasks || []).filter(t => t.done).map(t => t.text);
+      if (tasks.length === 0) { done++; continue; }
+      const prompt = `Evaluate Three Wins for ${day.date}.
+Completed tasks:\n${tasks.map((t,i)=>`${i+1}. ${t}`).join('\n')}
+Physical win: climbing, gym, run, MMA, workout, sports.
+Mental win: studying, research, academic, goal work.
+Spiritual win: journaling, meditation, prayer, sleeping early, reflection.
+Routine tasks (shower, eat, etc.) = null.
+Respond ONLY valid JSON: {"physical":bool,"mental":bool,"spiritual":bool,"reasoning":"brief","taskMap":{"task":"physical"|"mental"|"spiritual"|null}}`;
+      try {
+        const res = await fetch('https://anthropic-proxy.emailtonathan.workers.dev/', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
+        });
+        const data = await res.json();
+        const result = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g,'').trim());
+        await setDoc(doc(db, 'wins', day.date), {
+          date: day.date, physical: result.physical, mental: result.mental, spiritual: result.spiritual,
+          reasoning: result.reasoning || '', taskMap: result.taskMap || {}, evaluatedAt: Date.now(),
+          overridePhysical: null, overrideMental: null, overrideSpiritual: null,
+        });
+        winsCache[day.date] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
+        done++;
+        btn.textContent = `⏳ ${done}/${daysToEval.length}…`;
+        await new Promise(r => setTimeout(r, 600));
+      } catch(e) { console.error(`Failed ${day.date}:`, e); }
+    }
+    btn.disabled = false;
+    btn.textContent = '🔄 Re-evaluate Archive';
+    await updateStreak();
+    renderHistory();
+    alert(`Done! Evaluated ${done} day(s).`);
+  };
+  // ── END RE-EVALUATE ARCHIVE (DELETE TO HERE) ──────────────────────────────
 
 </script>
 </body>
