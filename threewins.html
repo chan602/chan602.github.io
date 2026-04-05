@@ -1270,8 +1270,8 @@
                   <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">W${i+1} — ${escHtml(t.text)}</span>
                 </div>`).join('')}
             ` : ''}
+            ${weekWinsData?.reasoning ? `<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">${escHtml(weekWinsData.reasoning)}</div>` : ''}
           </div>` : ''}
-          ${weekWinsData?.reasoning ? `<div style="padding:0.6rem 1rem 0.75rem;background:var(--bg);border-bottom:1px solid var(--line);font-size:0.78rem;color:var(--muted);font-style:italic;">Claude: ${escHtml(weekWinsData.reasoning)}</div>` : ''}
           <div id="days-${wk}"></div>
         </div>
       `;
@@ -1577,20 +1577,36 @@ Respond ONLY valid JSON: {"physical":bool,"mental":bool,"spiritual":bool,"reason
       renderHistory();
     }
 
-    // ── STEP 2: Evaluate the whole week ──────────────────────
+    // ── STEP 2: Evaluate the most recently archived week ─────
+    // We use weeklyHistory[0] (most recent archived week) not the
+    // live current week, since the current week is still in progress.
     btn.textContent = '⏳ Evaluating week…';
-    const wCompleted = weeklyTasks.filter(t => t.done).map((t,i) => `W${i+1}: ${t.text}`);
-    const wIncomplete = weeklyTasks.filter(t => !t.done).map((t,i) => `W${i+1}: ${t.text} (incomplete)`);
-    const dContext = dailyRepeatTasks.map((t,i) => `D${i+1}: ${t.text} — ${t.count||0}/7 days`);
 
-    const hasContent = wCompleted.length > 0 || dContext.length > 0 || wIncomplete.length > 0;
-    if (!hasContent) {
+    const targetWeek = weeklyHistory[0] || null;
+    if (!targetWeek) {
       btn.disabled = false;
       btn.textContent = '⭐ Evaluate Week';
+      alert('No archived week found to evaluate yet.');
       return;
     }
 
-    const prompt = `Evaluate Three Wins for this week based on completed weekly goals and daily habits.
+    const targetKey = targetWeek.weekKey;
+    const wTasks = targetWeek.wTasks || [];
+    const dTasks = targetWeek.dTasks || [];
+
+    const wCompleted = wTasks.filter(t => t.done).map((t,i) => `W${i+1}: ${t.text}`);
+    const wIncomplete = wTasks.filter(t => !t.done).map((t,i) => `W${i+1}: ${t.text} (incomplete)`);
+    const dContext = dTasks.map((t,i) => `D${i+1}: ${t.text} — ${t.count||0}/7 days`);
+
+    const hasContent = wTasks.length > 0 || dTasks.length > 0;
+    if (!hasContent) {
+      btn.disabled = false;
+      btn.textContent = '⭐ Evaluate Week';
+      alert('No weekly tasks or habits found for the archived week.');
+      return;
+    }
+
+    const prompt = `Evaluate Three Wins for the week of ${targetWeek.weekStart || targetKey}.
 
 Weekly goals:
 ${[...wCompleted, ...wIncomplete].length > 0 ? [...wCompleted, ...wIncomplete].join('\n') : '(none)'}
@@ -1617,16 +1633,16 @@ Respond ONLY valid JSON — no other text:
       if (!text) throw new Error('Empty response from API');
       const result = JSON.parse(text);
 
-      await setDoc(doc(db, 'wins', 'week-' + weekKey()), {
-        weekKey: weekKey(),
+      await setDoc(doc(db, 'wins', 'week-' + targetKey), {
+        weekKey: targetKey,
         physical: result.physical, mental: result.mental, spiritual: result.spiritual,
         reasoning: result.reasoning || '',
         evaluatedAt: Date.now(),
         overridePhysical: null, overrideMental: null, overrideSpiritual: null,
       });
-      winsCache['week-' + weekKey()] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
+      winsCache['week-' + targetKey] = { ...result, overridePhysical: null, overrideMental: null, overrideSpiritual: null };
       renderHistory();
-      alert(`Week evaluated!\n💪 ${result.physical?'✓':'✗'}  🧠 ${result.mental?'✓':'✗'}  🙏 ${result.spiritual?'✓':'✗'}\n\n${result.reasoning}`);
+      alert(`Week of ${targetWeek.weekStart || targetKey} evaluated!\n💪 ${result.physical?'✓':'✗'}  🧠 ${result.mental?'✓':'✗'}  🙏 ${result.spiritual?'✓':'✗'}\n\n${result.reasoning}`);
     } catch(e) {
       console.error('evaluateWeek error:', e);
       alert('Error evaluating week — check console for details.');
