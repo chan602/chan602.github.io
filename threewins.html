@@ -1323,9 +1323,9 @@
     todayWinsNotes = { physical: data.notePhysical ?? '', mental: data.noteMental ?? '', spiritual: data.noteSpiritual ?? '' };
     renderWinBadges(data.reasoning || '');
     // Show override buttons if already evaluated
-    ['physical','mental','spiritual'].forEach(w => {
-      document.getElementById(`overrideBtn-${w}`).style.display = canEdit ? 'inline' : 'none';
-    });
+   ['physical','mental','spiritual'].forEach(w => {
+  document.getElementById(`overrideBtn-${w}`).style.display = canEdit ? 'inline' : 'none';
+   });
   }
 
   function renderWinBadges(reasoning) {
@@ -1436,13 +1436,13 @@ Respond ONLY with valid JSON, no other text:
 
       renderWinBadges(result.reasoning || '');
       ['physical','mental','spiritual'].forEach(w => {
-        document.getElementById(`overrideBtn-${w}`).style.display = 'inline';
-      });
+  document.getElementById(`overrideBtn-${w}`).style.display = canEdit ? 'inline' : 'none';
+});
 
       // Update streak
       await updateStreak();
 
-      status.textContent = `Evaluated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      status.innerHTML = `Evaluated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} &nbsp;·&nbsp; <span style="font-size:0.75rem;opacity:0.6;">Powered by Claude AI</span>`;
       btn.textContent = '✨ Re-evaluate';
 
     } catch(e) {
