@@ -1270,8 +1270,8 @@
                   <span style="${t.done ? 'text-decoration:line-through;opacity:0.6' : ''}">W${i+1} — ${escHtml(t.text)}</span>
                 </div>`).join('')}
             ` : ''}
-            ${weekWinsData?.reasoning ? `<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">${escHtml(weekWinsData.reasoning)}</div>` : ''}
           </div>` : ''}
+          ${weekWinsData?.reasoning ? `<div style="padding:0.6rem 1rem 0.75rem;background:var(--bg);border-bottom:1px solid var(--line);font-size:0.78rem;color:var(--muted);font-style:italic;">Claude: ${escHtml(weekWinsData.reasoning)}</div>` : ''}
           <div id="days-${wk}"></div>
         </div>
       `;
