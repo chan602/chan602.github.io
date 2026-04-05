@@ -261,13 +261,15 @@
     padding: 0.75rem 1rem; background: var(--ink); color: #fff;
     border-radius: 6px 6px 0 0; cursor: pointer;
   }
+  .week-group.open .week-group-header { border-radius: 6px 6px 0 0; }
   .week-group-header:hover { background: #1a2e42; }
   .week-group-title { font-size: 0.85rem; font-weight: 500; }
   .week-group-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(255,255,255,0.7); }
   .week-group-expand { font-size: 0.68rem; color: rgba(255,255,255,0.5); transition: transform 0.25s; margin-left: 0.5rem; }
   .week-group.open .week-group-expand { transform: rotate(180deg); }
-  .week-group-body { display: none; border: 1px solid var(--line); border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; }
+  .week-group-body { display: none; border: 1px solid var(--line); border-top: none; border-radius: 0 0 0 0; overflow: hidden; }
   .week-group.open .week-group-body { display: block; }
+  .week-group-days { border: 1px solid var(--line); border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; }
   .week-summary-section { padding: 0.75rem 1rem; background: var(--bg); border-bottom: 1px solid var(--line); }
   .week-summary-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
   .week-d-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
@@ -1282,8 +1284,8 @@
             ` : ''}
             ${weekWinsData?.reasoning ? `<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);font-style:italic;">${escHtml(weekWinsData.reasoning)}</div>` : ''}
           </div>` : ''}
-          <div id="days-${wk}"></div>
         </div>
+        <div class="week-group-days" id="days-${wk}"></div>
       `;
       list.appendChild(group);
 
