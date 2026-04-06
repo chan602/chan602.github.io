@@ -164,6 +164,11 @@
     padding: 0.1rem 0.4rem; border-radius: 10px; margin-left: 0.3rem;
     vertical-align: middle; white-space: nowrap;
   }
+  .dtask-tag {
+    font-size: 0.65rem; background: #e8f5e9; color: #2e7d32;
+    padding: 0.1rem 0.4rem; border-radius: 10px; margin-left: 0.3rem;
+    vertical-align: middle; white-space: nowrap;
+  }
 
   .task-delete {
     background: none; border: none; cursor: pointer; color: var(--line);
@@ -971,6 +976,7 @@
       const carriedTag = t.carried
         ? (type === 'weekly' ? `<span class="weekly-carried-tag">↩ carried${isMultiCarried ? ' ×'+t.carryCount : ''}</span>` : `<span class="carried-tag">↩ carried${isMultiCarried ? ' ×'+t.carryCount : ''}</span>`)
         : '';
+      const dailyTag = t.fromDTask ? `<span class="dtask-tag">↺ daily</span>` : '';
       const editBtns = canEdit ? `
         <button class="task-check" onclick="toggleTask('${type}', ${t.id})">
           <span class="task-check-icon">✓</span>
@@ -981,7 +987,7 @@
       li.innerHTML = `
         <span class="task-num">${type === 'weekly' ? 'W' : (type === 'today' ? 'T' : 'Tm')}${i+1}</span>
         ${editBtns}
-        <span class="task-text">${escHtml(t.text)}${carriedTag}</span>
+        <span class="task-text">${escHtml(t.text)}${carriedTag}${dailyTag}</span>
         ${delBtn}
       `;
       ul.appendChild(li);
@@ -1034,7 +1040,7 @@
     if (!canEdit || dTaskBusy) return;
     dTaskBusy = true;
     const task = dailyRepeatTasks.find(t => t.id === id);
-    if (!task) return;
+    if (!task) { dTaskBusy = false; return; }
 
     // Increment D-task count (max 7)
     const updated = dailyRepeatTasks.map(t => t.id === id ? { ...t, count: Math.min((t.count || 0) + 1, 7) } : t);
@@ -1482,7 +1488,7 @@ Definitions (these are personal to the user):
 - Mental win: academic, professional, or goal-directed work — studying, researching, building, solving
 
 - Spiritual win: broad and personal — journaling, meditation, prayer, sleeping 9+ hours, meaningful conversation, reflection, anything that reconnects to purpose
-- Social connection (calling family/friends with intention) can count as spiritual (connect with folk = calling parents)
+- Social connection (calling family/friends with intention) can count as spiritual
 
 Note: routine hygiene tasks (shower, eat, etc.) should NOT count as wins and should map to null.
 Daily habits tapped today appear as completed tasks in the list above — treat them the same as any other completed task.
