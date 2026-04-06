@@ -638,21 +638,23 @@
     return d.toLocaleDateString('en-CA');
   }
   function weekKey() {
-    // Returns YYYY-WNN based on Sunday-start week
+    // Returns YYYY-WNN based on Monday-start week
     const d = new Date();
-    const day = d.getDay(); // 0=Sun
-    const sun = new Date(d); sun.setDate(d.getDate() - day);
-    const jan1 = new Date(sun.getFullYear(), 0, 1);
-    const week = Math.ceil(((sun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-    return `${sun.getFullYear()}-W${String(week).padStart(2,'0')}`;
+    const day = d.getDay(); // 0=Sun, 1=Mon
+    const diffToMon = (day === 0) ? -6 : 1 - day; // roll back to Monday
+    const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+    const jan1 = new Date(mon.getFullYear(), 0, 1);
+    const week = Math.ceil(((mon - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    return `${mon.getFullYear()}-W${String(week).padStart(2,'0')}`;
   }
   function weekRangeLabel() {
     const d = new Date();
     const day = d.getDay();
-    const sun = new Date(d); sun.setDate(d.getDate() - day);
-    const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+    const diffToMon = (day === 0) ? -6 : 1 - day;
+    const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
     const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return `${fmt(sun)} – ${fmt(sat)}`;
+    return `${fmt(mon)} – ${fmt(sun)}`;
   }
 
   // ── LOCK ──────────────────────────────────────────────────
@@ -830,7 +832,7 @@
 
     // ── WEEKLY ROLLOVER (Sunday) ──────────────────────────────
     const dayOfWeek = new Date().getDay();
-    if (dayOfWeek === 0 && meta.lastWeekRollover !== weekKey()) {
+    if (dayOfWeek === 1 && meta.lastWeekRollover !== weekKey()) {
       await weeklyRollover();
       await setDoc(doc(db, 'meta', 'rollover'), {
         lastRollover: today,
@@ -842,10 +844,11 @@
   async function weeklyRollover() {
     const prevWeek = new Date(); prevWeek.setDate(prevWeek.getDate() - 7);
     const prevDay = prevWeek.getDay();
-    const prevSun = new Date(prevWeek); prevSun.setDate(prevWeek.getDate() - prevDay);
-    const jan1 = new Date(prevSun.getFullYear(), 0, 1);
-    const wk = Math.ceil(((prevSun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-    const prevKey = `${prevSun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+    const diffToMon = (prevDay === 0) ? -6 : 1 - prevDay;
+    const prevMon = new Date(prevWeek); prevMon.setDate(prevWeek.getDate() + diffToMon);
+    const jan1 = new Date(prevMon.getFullYear(), 0, 1);
+    const wk = Math.ceil(((prevMon - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    const prevKey = `${prevMon.getFullYear()}-W${String(wk).padStart(2,'0')}`;
 
     const prevSnap = await getDoc(doc(db, 'weekly', prevKey));
     const prevRepeatSnap = await getDoc(doc(db, 'dailyRepeat', prevKey));
@@ -857,7 +860,7 @@
       const wDone = wTasks.filter(t => t.done).length;
       await setDoc(weeklyArchiveRef(prevKey), {
         weekKey: prevKey,
-        weekStart: prevSun.toLocaleDateString('en-CA'),
+        weekStart: prevMon.toLocaleDateString('en-CA'),
         wTasks,
         dTasks,
         summary: `${wDone}/${wTasks.length} weekly goals completed`,
@@ -1085,11 +1088,12 @@
       const d = new Date();
       d.setDate(d.getDate() - (i * 7));
       const day = d.getDay();
-      const sun = new Date(d); sun.setDate(d.getDate() - day);
-      const jan1 = new Date(sun.getFullYear(), 0, 1);
-      const wk = Math.ceil(((sun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-      const wkKey = `${sun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
-      if (!archivedKeys.has(wkKey)) weeksToCheck.push({ wkKey, sun });
+      const diffToMon = (day === 0) ? -6 : 1 - day;
+      const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+      const jan1 = new Date(mon.getFullYear(), 0, 1);
+      const wk = Math.ceil(((mon - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+      const wkKey = `${mon.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+      if (!archivedKeys.has(wkKey)) weeksToCheck.push({ wkKey, mon });
     }
 
     // Fetch any that have data in the weekly collection
@@ -1101,7 +1105,7 @@
           const wDone = wTasks.filter(t => t.done).length;
           weeklyHistory.push({
             weekKey: wkKey,
-            weekStart: sun.toLocaleDateString('en-CA'),
+            weekStart: mon.toLocaleDateString('en-CA'),
             wTasks,
             dTasks: [], // pre-dates D-task system
             summary: `${wDone}/${wTasks.length} weekly goals completed`,
@@ -1192,10 +1196,11 @@
   function getWeekKeyForDate(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
     const day = d.getDay();
-    const sun = new Date(d); sun.setDate(d.getDate() - day);
-    const jan1 = new Date(sun.getFullYear(), 0, 1);
-    const wk = Math.ceil(((sun - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-    return `${sun.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+    const diffToMon = (day === 0) ? -6 : 1 - day;
+    const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
+    const jan1 = new Date(mon.getFullYear(), 0, 1);
+    const wk = Math.ceil(((mon - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    return `${mon.getFullYear()}-W${String(wk).padStart(2,'0')}`;
   }
 
   function renderHistory() {
@@ -1241,10 +1246,20 @@
       const weekWinsData = winsCache['week-' + wk] || null;
       const weekAllThree = weekWinsData && isThreeWinDay(weekWinsData);
 
-      // Week label
-      const weekLabel = weekData
-        ? `Week of ${new Date(weekData.weekStart + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-        : wk;
+      // Week label — use weekStart if available, otherwise parse from key
+      let weekLabel = wk; // fallback
+      if (weekData?.weekStart) {
+        weekLabel = `Week of ${new Date(weekData.weekStart + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      } else {
+        // Parse YYYY-WNN to find the Monday of that week
+        const [yr, wNum] = wk.split('-W').map(Number);
+        const jan1 = new Date(yr, 0, 1);
+        const firstMon = new Date(jan1);
+        firstMon.setDate(jan1.getDate() + (8 - jan1.getDay()) % 7 || 7);
+        const weekStart = new Date(firstMon);
+        weekStart.setDate(firstMon.getDate() + (wNum - 1) * 7);
+        weekLabel = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
 
       const group = document.createElement('div');
       group.className = 'week-group';
