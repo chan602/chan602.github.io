@@ -1097,7 +1097,7 @@
     }
 
     // Fetch any that have data in the weekly collection
-    await Promise.all(weeksToCheck.map(async ({ wkKey, sun }) => {
+    await Promise.all(weeksToCheck.map(async ({ wkKey, mon }) => {
       const wSnap = await getDoc(doc(db, 'weekly', wkKey));
       if (wSnap.exists()) {
         const wTasks = wSnap.data().tasks || [];
@@ -1109,7 +1109,7 @@
             wTasks,
             dTasks: [], // pre-dates D-task system
             summary: `${wDone}/${wTasks.length} weekly goals completed`,
-            archivedAt: sun.getTime(), // use week start as sort key
+            archivedAt: mon.getTime(), // use week start as sort key
             backfilled: true
           });
         }
