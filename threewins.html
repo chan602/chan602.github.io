@@ -241,11 +241,20 @@
   .d-task-count { font-size: 0.72rem; color: var(--muted); }
   .d-task-actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
   .d-task-tap {
-    padding: 0.25rem 0.6rem; background: var(--weekly-accent); color: #fff;
-    border: none; border-radius: 4px; font-size: 0.75rem; font-weight: 500;
+    padding: 0.25rem 0.5rem; background: var(--weekly-accent); color: #fff;
+    border: none; border-radius: 4px 0 0 4px; font-size: 0.75rem; font-weight: 500;
     cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
   }
   .d-task-tap:hover { background: #0a4a8a; }
+  .d-task-untap {
+    padding: 0.25rem 0.5rem; background: var(--bg); color: var(--muted);
+    border: 1px solid var(--line); border-left: none; border-radius: 0 4px 4px 0;
+    font-size: 0.75rem; font-weight: 500; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .d-task-untap:hover { background: #fce4e4; color: #c62828; border-color: #c62828; }
+  .d-task-untap:disabled { opacity: 0.3; cursor: not-allowed; }
+  body.readonly .d-task-untap { display: none; }
   .d-task-delete {
     background: none; border: none; cursor: pointer; color: var(--line);
     font-size: 1rem; transition: color 0.15s;
@@ -1019,10 +1028,54 @@
     await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
   };
 
+  let dTaskBusy = false;
+
   window.tapDailyRepeat = async function(id) {
-    if (!canEdit) return;
+    if (!canEdit || dTaskBusy) return;
+    dTaskBusy = true;
+    const task = dailyRepeatTasks.find(t => t.id === id);
+    if (!task) return;
+
+    // Increment D-task count (max 7)
     const updated = dailyRepeatTasks.map(t => t.id === id ? { ...t, count: Math.min((t.count || 0) + 1, 7) } : t);
     await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
+
+    // Also add as a completed task to today's list so daily eval picks it up
+    // Only add if this D-task isn't already in today's list
+    const alreadyInToday = todayTasks.some(t => t.fromDTask && t.text === task.text);
+    if (!alreadyInToday) {
+      const todayEntry = {
+        id: Date.now(),
+        text: task.text,
+        done: true,
+        carried: false,
+        carryCount: 0,
+        createdAt: Date.now(),
+        fromDTask: true
+      };
+      const updatedToday = [...todayTasks, todayEntry];
+      await setDoc(todayRef(), { tasks: updatedToday, date: todayStr() });
+    }
+    dTaskBusy = false;
+  };
+
+  window.untapDailyRepeat = async function(id) {
+    if (!canEdit || dTaskBusy) return;
+    dTaskBusy = true;
+    const task = dailyRepeatTasks.find(t => t.id === id);
+    if (!task || (task.count || 0) === 0) { dTaskBusy = false; return; }
+
+    // Decrement count
+    const updated = dailyRepeatTasks.map(t => t.id === id ? { ...t, count: Math.max((t.count || 0) - 1, 0) } : t);
+    await setDoc(dailyRepeatRef(), { tasks: updated, weekKey: weekKey() });
+
+    // Remove the fromDTask entry from today's list if count drops to 0
+    const newCount = (task.count || 0) - 1;
+    if (newCount === 0) {
+      const updatedToday = todayTasks.filter(t => !(t.fromDTask && t.text === task.text));
+      await setDoc(todayRef(), { tasks: updatedToday, date: todayStr() });
+    }
+    dTaskBusy = false;
   };
 
   window.deleteDailyRepeat = async function(id) {
@@ -1051,7 +1104,9 @@
           <div class="d-task-count">${t.count || 0}/7 days</div>
         </div>
         <div class="d-task-actions">
-          ${canEdit ? `<button class="d-task-tap" onclick="tapDailyRepeat(${t.id})">+1 day</button>` : ''}
+          ${canEdit ? `
+            <button class="d-task-tap" onclick="tapDailyRepeat(${t.id})">+</button><button class="d-task-untap" onclick="untapDailyRepeat(${t.id})" ${(t.count||0) === 0 ? 'disabled' : ''}>−</button>
+          ` : ''}
           ${canEdit ? `<button class="d-task-delete" onclick="deleteDailyRepeat(${t.id})">×</button>` : ''}
         </div>
       `;
@@ -1430,7 +1485,7 @@ Definitions (these are personal to the user):
 - Social connection (calling family/friends with intention) can count as spiritual
 
 Note: routine hygiene tasks (shower, eat, etc.) should NOT count as wins and should map to null.
-Daily habits with 1+ completions this week count toward wins.
+Daily habits tapped today appear as completed tasks in the list above — treat them the same as any other completed task.
 For taskMap, assign each task to "physical", "mental", "spiritual", or null.
 
 Respond ONLY with valid JSON, no other text:
