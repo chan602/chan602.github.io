@@ -747,7 +747,7 @@
 
   // ── FIREBASE REFS ─────────────────────────────────────────
   const todayRef  = () => doc(db, 'tasks', todayStr());
-  const tmrwRef = () => doc(db, 'tomorrow', 'queue');
+  const tmrwRef = () => doc(db, 'tomorrow', todayStr()); // dated doc — today's tomorrow queue
   const weekRef   = () => doc(db, 'weekly', weekKey());
   const dailyRepeatRef = () => doc(db, 'dailyRepeat', weekKey());
   const weeklyArchiveRef = (wk) => doc(db, 'weeklyArchive', wk);
@@ -836,11 +836,11 @@
           .map(t => ({ ...t, carried: true, done: false, carryCount: (t.carryCount || 0) + 1 }));
       }
 
-      // 3. Pull tomorrow queue directly — safe because Firebase flag guarantees
-      //    this only runs once, so we can't accidentally pull tasks mid-day
-      const tmrwSnap = await getDoc(tmrwRef());
-      const fromTmrw = tmrwSnap.exists()
-        ? (tmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }))
+      // 3. Pull yesterday's tomorrow doc — each day's queue lives under that day's date
+      //    This avoids race conditions since we never clear or overwrite it
+      const yTmrwSnap = await getDoc(doc(db, 'tomorrow', yStr));
+      const fromTmrw = yTmrwSnap.exists()
+        ? (yTmrwSnap.data().tasks || []).map(t => ({ ...t, carried: false, done: false, carryCount: 0 }))
         : [];
 
       // 4. Merge and deduplicate, then save as today's task list
@@ -848,9 +848,7 @@
       const seen = new Set();
       const merged = allTasks.filter(t => seen.has(t.id) ? false : seen.add(t.id));
       await setDoc(todayRef(), { tasks: merged, date: today });
-
-      // 5. Clear the tomorrow queue so it's fresh for new additions today
-      await setDoc(tmrwRef(), { tasks: [], date: today });
+      // No need to clear anything — yesterday's doc stays as a record
 
       // 6. Mark rollover done — all other devices will now skip
       await setDoc(doc(db, 'meta', 'rollover'), { ...meta, lastRollover: today });
