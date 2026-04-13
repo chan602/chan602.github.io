@@ -485,17 +485,16 @@
     </div>
     -->
 
-    <!-- ARCHIVE — moved to threedailywins.com -->
+    <!-- HISTORY -->
     <div class="history-section" id="historySection">
       <div class="history-header">
         <div>
           <h2 class="history-title">Archive</h2>
+          <p id="historyMeta" style="font-size:0.78rem; color:var(--muted); margin-top:0.15rem;"></p>
         </div>
+        <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
       </div>
-      <p style="font-size:0.88rem; color:var(--muted); padding:0.5rem 0 1rem;">
-        Daily archive has moved to the app. View my full history at
-        <a href="https://threedailywins.com/u/chan602" style="color:var(--accent); text-decoration:none; font-weight:500;">threedailywins.com/u/chan602</a>.
-      </p>
+      <div id="historyList"></div>
     </div>
 
   </div>
@@ -504,7 +503,7 @@
 <!-- FIREBASE — read-only archive + streak view -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc }
+  import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -559,6 +558,7 @@
     document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US',
       { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+    await loadWeeklyHistory();
     await loadStreak();
 
     document.getElementById('appLoading').style.display = 'none';
@@ -1377,6 +1377,8 @@ Respond ONLY with valid JSON, no other text:
     document.getElementById('streakTotal').textContent = total;
   }
 
+  /* ── OBSOLETE — updateStreak + evaluateWeek — not used on this page ──
+
   async function updateStreak() {
     // Check if today is a 3-win day
     const todaySnap = await getDoc(winsRef());
@@ -1533,6 +1535,7 @@ Respond ONLY valid JSON — no other text:
       alert('Error evaluating week — check console for details.');
     }
 
+  */ // ── END OBSOLETE ──────────────────────────────────────
 
 </script>
 </body>
