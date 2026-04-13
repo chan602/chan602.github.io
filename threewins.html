@@ -485,17 +485,16 @@
     </div>
     -->
 
-    <!-- ARCHIVE — moved to threedailywins.com -->
+    <!-- HISTORY -->
     <div class="history-section" id="historySection">
       <div class="history-header">
         <div>
           <h2 class="history-title">Archive</h2>
+          <p id="historyMeta" style="font-size:0.78rem; color:var(--muted); margin-top:0.15rem;"></p>
         </div>
+        <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
       </div>
-      <p style="font-size:0.88rem; color:var(--muted); padding:0.5rem 0 1rem;">
-        Daily archive has moved to the app. View my full history at
-        <a href="https://threedailywins.com/u/chan602" style="color:var(--accent); text-decoration:none; font-weight:500;">threedailywins.com/u/chan602</a>.
-      </p>
+      <div id="historyList"></div>
     </div>
 
   </div>
@@ -539,8 +538,13 @@
     document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US',
       { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    await loadStreak();
-    await loadWeeklyHistory(); // calls loadHistory internally
+    try {
+      await loadStreak();
+      await loadWeeklyHistory(); // calls loadHistory internally
+    } catch(e) {
+      console.error('Firebase error:', e);
+      document.getElementById('historyMeta').textContent = 'Could not load archive — check Firestore rules.';
+    }
 
     document.getElementById('appLoading').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
