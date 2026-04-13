@@ -17,42 +17,11 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.7; min-height: 100vh; }
 
-  /* LOCK */
-  #lockScreen {
-    position: fixed; inset: 0; background: rgba(15,30,46,0.5);
-    display: flex; align-items: center; justify-content: center; z-index: 999;
-  }
-  #lockScreen.hidden { display: none; }
-  .lock-card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-    padding: 2.5rem 2rem; width: 100%; max-width: 360px;
-    box-shadow: 0 8px 40px rgba(26,109,181,0.1); text-align: center;
-  }
-  .lock-icon { font-size: 2rem; margin-bottom: 0.75rem; }
-  .lock-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.3rem; }
-  .lock-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
-  .lock-input {
-    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--line);
-    border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 1rem;
-    background: var(--bg); color: var(--ink); outline: none; text-align: center;
-    letter-spacing: 0.2em; margin-bottom: 1rem; transition: border-color 0.2s;
-  }
-  .lock-input:focus { border-color: var(--accent); }
-  .lock-btn {
-    width: 100%; padding: 0.75rem; background: var(--accent); color: #fff;
-    border: none; border-radius: 4px; font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.2s;
-  }
-  .lock-btn:hover { background: #145a96; }
-  .lock-error { font-size: 0.82rem; color: #e05050; margin-top: 0.75rem; display: none; }
-  .lock-error.visible { display: block; }
-  .lock-hint { font-size: 0.72rem; color: var(--line); margin-top: 1rem; }
-  .view-only-btn {
-    width: 100%; padding: 0.6rem; background: transparent; color: var(--muted);
-    border: 1px solid var(--line); border-radius: 4px; font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem; cursor: pointer; margin-top: 0.75rem; transition: all 0.2s;
-  }
-  .view-only-btn:hover { border-color: var(--accent); color: var(--accent); }
+  /* LOCK — commented out, page is now always public read-only
+  #lockScreen { ... }
+  .lock-card { ... }
+  ... (lock styles removed)
+  */
 
   /* NAV */
   nav {
@@ -300,63 +269,38 @@
   .philosophy-card p:last-child { margin-bottom: 0; }
   .philosophy-card strong { color: var(--ink); }
 
+  /* Single total-wins pill */
+  .streak-pill {
+    display: inline-flex; align-items: center; gap: 0.75rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.9rem 1.5rem; margin-bottom: 1.5rem;
+  }
+  .streak-pill::before { content: ''; display: block; width: 3px; height: 2rem; background: #2e7d32; border-radius: 2px; }
+  .streak-pill-val { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); line-height: 1; }
+  .streak-pill-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Streak grid — commented out (replaced by single pill above)
   .streak-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-  .streak-card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
-    padding: 1.1rem 1rem; text-align: center; position: relative; overflow: hidden;
-  }
-  .streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
-  .streak-card.green::before { background: #2e7d32; }
-  .streak-val { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); line-height: 1; margin-bottom: 0.3rem; }
-  .streak-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .streak-card { ... }
+  */
 
-  .wins-panel {
-    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
-    padding: 1.5rem; margin-bottom: 1.5rem;
-  }
-  .wins-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem; }
-  .wins-panel-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; }
-  .eval-btn {
-    padding: 0.6rem 1.2rem; background: var(--accent); color: #fff;
-    border: none; border-radius: 4px; font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.2s;
-  }
-  .eval-btn:hover { background: #145a96; }
-  .eval-btn:disabled { background: var(--muted); cursor: not-allowed; }
-  .eval-status { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; font-style: italic; }
-
-  .win-row { display: flex; align-items: flex-start; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
-  .win-row:last-of-type { border-bottom: none; }
-  .win-icon { font-size: 1.4rem; flex-shrink: 0; width: 2rem; text-align: center; margin-top: 2px; }
-  .win-info { flex: 1; min-width: 0; }
-  .win-label { font-size: 0.9rem; font-weight: 500; color: var(--ink); margin-bottom: 0.15rem; }
-  .win-reasoning { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 0.15rem; }
-  .win-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-  .win-badge { font-size: 0.75rem; font-weight: 500; padding: 0.2rem 0.65rem; border-radius: 20px; white-space: nowrap; }
-  .win-badge.achieved { background: #e8f5e9; color: #2e7d32; }
-  .win-badge.missed { background: #fce4e4; color: #c62828; }
-  .win-badge.pending { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
-  .win-badge.override { background: #fff3e0; color: #e65100; }
-  .override-btn {
-    font-size: 0.72rem; color: var(--muted); background: none;
-    border: 1px solid var(--line); border-radius: 4px; padding: 0.2rem 0.5rem;
-    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-  }
-  .override-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .override-box { margin-top: 0.6rem; display: none; }
-  .override-box.open { display: block; }
-  .override-input {
-    width: 100%; padding: 0.45rem 0.7rem; border: 1px solid var(--line);
-    border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
-    background: var(--bg); color: var(--ink); outline: none; margin-bottom: 0.4rem; transition: border-color 0.2s;
-  }
-  .override-input:focus { border-color: var(--accent); }
-  .override-save-btn {
-    font-size: 0.78rem; padding: 0.3rem 0.75rem; background: var(--accent); color: #fff;
-    border: none; border-radius: 4px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
-  }
-  .override-save-btn:hover { background: #145a96; }
-
+  /* WINS PANEL — commented out, evaluation UI removed
+  .wins-panel { ... }
+  .wins-panel-header { ... }
+  .wins-panel-title { ... }
+  .eval-btn { ... }
+  .win-row { ... }
+  .win-icon { ... }
+  .win-info { ... }
+  .win-label { ... }
+  .win-reasoning { ... }
+  .win-actions { ... }
+  .win-badge { ... }
+  .override-btn { ... }
+  .override-box { ... }
+  .override-input { ... }
+  .override-save-btn { ... }
+  */
   /* history tier colors for wins */
   .tier-1 .history-day-header { background: var(--card); border-left: 3px solid var(--line); }
   .tier-2 .history-day-header { background: var(--card); border-left: 3px solid #a5d6a7; }
@@ -376,19 +320,9 @@
     .nav-links { gap: 0.5rem; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
     .nav-links::-webkit-scrollbar { display: none; }
     .nav-links a { font-size: 0.72rem; white-space: nowrap; }
-    .nav-linkedin { padding: 0.3rem 0.6rem; font-size: 0.7rem !important; }
     main { padding: 7rem 1rem 3rem; }
     .page-title { font-size: 1.8rem; }
-    .streak-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-    .streak-val { font-size: 1.5rem; }
-    /* Stack Today + Tomorrow vertically on mobile */
-    .grid { grid-template-columns: 1fr; gap: 1rem; }
-    /* Philosophy card tighter on mobile */
     .philosophy-card { padding: 1.25rem 1rem; }
-    /* Wins panel rows more compact */
-    .win-row { gap: 0.5rem; }
-    .win-icon { font-size: 1.2rem; width: 1.6rem; }
-    /* D-task bar narrower */
     .week-d-bar { width: 50px; }
   }
 </style>
@@ -396,7 +330,7 @@
 </head>
 <body>
 
-<!-- LOCK -->
+<!-- LOCK SCREEN — commented out, page is always public read-only
 <div id="lockScreen" class="hidden">
   <div class="lock-card">
     <div class="lock-icon">🔒</div>
@@ -410,6 +344,7 @@
    <p class="lock-hint">😼</p>
   </div>
 </div>
+-->
 
 <!-- NAV -->
 <nav>
@@ -422,7 +357,7 @@
     <li><a href="devblog.html">Dev Blog</a></li>
    <li><a href="climbing.html">Climbing</a></li>
    <li><a href="gallery.html">Gallery</a></li>
-    <li><button class="nav-lock-btn" id="navLockBtn" onclick="navLockAction()">🔓 Unlock</button></li>
+    <!-- nav lock button removed — page is always public read-only -->
   </ul>
 </nav>
 
@@ -461,7 +396,13 @@
      <a href="devblog.html" style="font-size:0.82rem; color:#1a6db5; text-decoration:none; font-weight:500;"> View development blog →</a>
 </div>
 
-    <!-- STREAK -->
+    <!-- Single total three-win-days pill (replaces 3-card streak grid) -->
+    <div class="streak-pill">
+      <div class="streak-pill-val" id="streakTotal">–</div>
+      <div class="streak-pill-label">Total Three-Win Days</div>
+    </div>
+
+    <!-- STREAK GRID — commented out, replaced by single pill above
     <div class="streak-grid" id="streakGrid">
       <div class="streak-card green">
         <div class="streak-val" id="streakCurrent">–</div>
@@ -476,16 +417,15 @@
         <div class="streak-label">Best Streak</div>
       </div>
     </div>
+    -->
 
-    <!-- 3 WINS EVALUATION -->
+    <!-- 3 WINS EVALUATION PANEL — commented out, eval UI lives in threedailywins.com
     <div class="wins-panel" id="winsPanel">
       <div class="wins-panel-header">
         <span class="wins-panel-title">🏆 Today's Three Wins</span>
         <button class="eval-btn" id="evalBtn" onclick="evaluateWins()">✨ Evaluate with AI</button>
       </div>
       <div id="evalStatus" class="eval-status"></div>
-
-      <!-- WIN ROWS -->
       <div class="win-row" id="winRow-physical">
         <div class="win-icon">💪</div>
         <div class="win-info">
@@ -501,7 +441,6 @@
           <button class="override-btn" id="overrideBtn-physical" onclick="toggleOverride('physical')">Override</button>
         </div>
       </div>
-
       <div class="win-row" id="winRow-mental">
         <div class="win-icon">🧠</div>
         <div class="win-info">
@@ -517,7 +456,6 @@
           <button class="override-btn" id="overrideBtn-mental" onclick="toggleOverride('mental')">Override</button>
         </div>
       </div>
-
       <div class="win-row" id="winRow-spiritual">
         <div class="win-icon">🙏</div>
         <div class="win-info">
@@ -534,111 +472,40 @@
         </div>
       </div>
     </div>
+    -->
 
-    <!-- TODAY + TOMORROW -->
+    <!-- TODAY / TOMORROW / WEEKLY panels — commented out, task management moved to threedailywins.com -->
+    <!--
     <div class="grid">
-
-      <!-- TODAY -->
-      <div class="panel panel-today">
-        <div class="panel-header">
-          <span class="panel-title">📅 Today</span>
-          <span class="panel-meta" id="todayMeta"></span>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-meta">
-            <span id="todayProgressLabel">0 of 0</span>
-            <span id="todayProgressPct">0%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="todayProgressFill" style="width:0%"></div></div>
-        </div>
-        <div class="add-row">
-          <input class="add-input" id="todayInput" placeholder="Add today task (Td)…" onkeydown="if(event.key==='Enter') addTask('today')"/>
-          <button class="add-btn add-btn-today" onclick="addTask('today')">+ Today</button>
-        </div>
-        <ul class="task-list" id="todayList"></ul>
-        <div class="sync-indicator" id="todaySync"></div>
-      </div>
-
-      <!-- TOMORROW -->
-      <div class="panel panel-tomorrow">
-        <div class="panel-header">
-          <span class="panel-title">⏭ Tomorrow</span>
-          <span class="panel-meta" id="tomorrowMeta"></span>
-        </div>
-        <div class="add-row">
-          <input class="add-input" id="tomorrowInput" placeholder="Queue for tomorrow (Tm)…" onkeydown="if(event.key==='Enter') addTask('tomorrow')"/>
-          <button class="add-btn add-btn-tomorrow" onclick="addTask('tomorrow')">+ Tomorrow</button>
-        </div>
-        <ul class="task-list" id="tomorrowList"></ul>
-        <div class="sync-indicator" id="tomorrowSync"></div>
-      </div>
-
+      <div class="panel panel-today"> ... </div>
+      <div class="panel panel-tomorrow"> ... </div>
     </div>
-
-    <!-- WEEKLY -->
     <div class="grid">
-      <div class="panel panel-weekly">
-        <div class="panel-header">
-          <span class="panel-title">📆 This Week</span>
-          <span class="panel-meta" id="weekMeta"></span>
-        </div>
-        <p class="week-header" id="weekRange"></p>
-        <div class="progress-wrap">
-          <div class="progress-meta">
-            <span id="weekProgressLabel">0 of 0</span>
-            <span id="weekProgressPct">0%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill progress-fill-weekly" id="weekProgressFill" style="width:0%"></div></div>
-        </div>
-
-        <!-- W tasks (one-time weekly goals) -->
-        <div class="add-row">
-          <input class="add-input" id="weeklyInput" placeholder="Add weekly goal (W)…" onkeydown="if(event.key==='Enter') addTask('weekly')"/>
-          <button class="add-btn add-btn-weekly" onclick="addTask('weekly')">+ W</button>
-        </div>
-        <ul class="task-list" id="weeklyList"></ul>
-
-        <!-- D tasks (daily repeat habits) -->
-        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--line);">
-          <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Daily Habits (D)</div>
-          <div class="add-row">
-            <input class="add-input" id="dailyRepeatInput" placeholder="Add daily habit (D)…" onkeydown="if(event.key==='Enter') addDailyRepeat()"/>
-            <button class="add-btn add-btn-weekly" onclick="addDailyRepeat()">+ D</button>
-          </div>
-          <div id="dailyRepeatList"></div>
-        </div>
-
-        <div class="sync-indicator" id="weeklySync"></div>
-      </div>
+      <div class="panel panel-weekly"> ... </div>
     </div>
+    -->
 
-    <!-- HISTORY -->
+    <!-- ARCHIVE — moved to threedailywins.com -->
     <div class="history-section" id="historySection">
       <div class="history-header">
         <div>
           <h2 class="history-title">Archive</h2>
-          <p id="historyMeta" style="font-size:0.78rem; color:var(--muted); margin-top:0.15rem;">No archived days yet — days archive automatically at midnight.</p>
-        </div>
-        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-          <button class="view-all-btn" id="viewAllBtn" onclick="toggleHistory()" style="display:none">View all →</button>
-          <button id="evalWeekBtn" onclick="evaluateWeek()" style="font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);display:none;">⭐ Evaluate Week</button>
         </div>
       </div>
-      <div id="historyList"></div>
+      <p style="font-size:0.88rem; color:var(--muted); padding:0.5rem 0 1rem;">
+        Daily archive has moved to the app. View my full history at
+        <a href="https://threedailywins.com/u/chan602" style="color:var(--accent); text-decoration:none; font-weight:500;">threedailywins.com/u/chan602</a>.
+      </p>
     </div>
 
   </div>
 </main>
 
-<!-- FIREBASE -->
+<!-- FIREBASE — read-only archive + streak view -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs }
+  import { getFirestore, doc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  // ── CONFIG ────────────────────────────────────────────────
-  const PASSWORD = 'meow'; // ← change your password here
-  const SESSION_KEY = 'nc_unlocked';
 
   const firebaseConfig = {
     apiKey: "AIzaSyCGviyNZCiX5eAzjvV4qWIBGS3OD4sStVM",
@@ -652,11 +519,9 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // ── STATE ─────────────────────────────────────────────────
-  let canEdit = false;
+  // ── STATE (read-only) ─────────────────────────────────────
   let showAllHistory = false;
-  let todayTasks = [], tomorrowTasks = [], weeklyTasks = [], dailyRepeatTasks = [], history = [], weeklyHistory = [];
-  let syncTimer = null;
+  let history = [], weeklyHistory = [];
 
   // ── DATES ─────────────────────────────────────────────────
   function todayStr() {
@@ -686,124 +551,27 @@
     return `${fmt(mon)} – ${fmt(sun)}`;
   }
 
-  // ── LOCK ──────────────────────────────────────────────────
-  window.checkPassword = function() {
-    const val = document.getElementById('pwInput').value;
-    const err = document.getElementById('pwError');
-    if (val === PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, '1');
-      canEdit = true;
-      hideLock();
-      renderToday();
-      renderTomorrow();
-      renderWeekly();
-      renderDailyRepeats();
-    } else {
-      err.classList.add('visible');
-      document.getElementById('pwInput').value = '';
-      document.getElementById('pwInput').focus();
-    }
-  };
-
-  window.navLockAction = function() {
-    if (canEdit) {
-      // Currently editing — lock it
-      sessionStorage.removeItem(SESSION_KEY);
-      canEdit = false;
-      document.body.classList.add('readonly');
-      document.getElementById('modeBadge').innerHTML = '<span class="view-only-badge">👁 View only</span>';
-      document.getElementById('navLockBtn').textContent = '🔓 Unlock';
-    } else {
-      // Currently view-only — show password prompt
-      document.getElementById('lockScreen').classList.remove('hidden');
-      document.getElementById('pwInput').value = '';
-      document.getElementById('pwError').classList.remove('visible');
-      setTimeout(() => document.getElementById('pwInput').focus(), 50);
-    }
-  };
-
-  window.closeLock = function() {
-    document.getElementById('lockScreen').classList.add('hidden');
-  };
-
-  function hideLock() {
-    document.getElementById('lockScreen').classList.add('hidden');
-    if (canEdit) {
-      document.body.classList.remove('readonly');
-      document.getElementById('modeBadge').innerHTML = '<span class="edit-badge">✏️ Edit mode</span>';
-      document.getElementById('navLockBtn').textContent = '🔒 Lock';
-    } else {
-      document.body.classList.add('readonly');
-      document.getElementById('modeBadge').innerHTML = '<span class="view-only-badge">👁 View only</span>';
-      document.getElementById('navLockBtn').textContent = '🔓 Unlock';
-    }
-  }
-
-  // Always start in view-only, unless session already unlocked
-  if (sessionStorage.getItem(SESSION_KEY) === '1') {
-    canEdit = true;
-    hideLock();
-  } else {
-    canEdit = false;
-    hideLock();
-  }
-  initApp();
-
-  // ── FIREBASE REFS ─────────────────────────────────────────
-  const todayRef  = () => doc(db, 'tasks', todayStr());
-  const tmrwRef = () => doc(db, 'tomorrow', todayStr()); // dated doc — today's tomorrow queue
-  const weekRef   = () => doc(db, 'weekly', weekKey());
-  const dailyRepeatRef = () => doc(db, 'dailyRepeat', weekKey());
-  const weeklyArchiveRef = (wk) => doc(db, 'weeklyArchive', wk);
-  const archRef   = (dateStr) => doc(db, 'archive', dateStr);
+  // ── FIREBASE REFS (read-only) ─────────────────────────────
+  const streakRef = () => doc(db, 'meta', 'streak');
 
   // ── INIT ──────────────────────────────────────────────────
   async function initApp() {
     document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US',
       { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('weekRange').textContent = weekRangeLabel();
 
-    // Check if rollover needed
-    await checkRollover();
-
-    // Live listeners
-    onSnapshot(todayRef(), snap => {
-      todayTasks = snap.exists() ? (snap.data().tasks || []) : [];
-      renderToday();
-    });
-    onSnapshot(tmrwRef(), snap => {
-      tomorrowTasks = snap.exists() ? (snap.data().tasks || []) : [];
-      renderTomorrow();
-    });
-    onSnapshot(weekRef(), snap => {
-      weeklyTasks = snap.exists() ? (snap.data().tasks || []) : [];
-      renderWeekly();
-    });
-
-    // Daily repeat habits listener
-    onSnapshot(dailyRepeatRef(), snap => {
-      dailyRepeatTasks = snap.exists() ? (snap.data().tasks || []) : [];
-      renderDailyRepeats();
-    });
-
-    // Load history — loadWeeklyHistory calls loadHistory internally
-    await loadWeeklyHistory();
-
-    // Load today's wins evaluation
-    await loadTodayWins();
-
-    // Load streak
     await loadStreak();
 
     document.getElementById('appLoading').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
   }
 
+  initApp();
+
+  /* ── OBSOLETE EDIT FUNCTIONS — commented out ────────────────
+     All task management and AI evaluation has moved to threedailywins.com.
+     This page is now read-only (archive + streak).
+
   // ── ROLLOVER ──────────────────────────────────────────────
-  // Single source of truth: Firebase meta/rollover document.
-  // All devices read the same flag — no localStorage dependency.
-  async function checkRollover() {
-    const today = todayStr();
 
     // Read rollover state from Firebase — single source of truth for all devices
     const metaSnap = await getDoc(doc(db, 'meta', 'rollover'));
@@ -1122,6 +890,8 @@
     });
   }
 
+  */ // ── END OBSOLETE EDIT FUNCTIONS ───────────────────────
+
   // ── HISTORY ───────────────────────────────────────────────
   // Stores wins data keyed by date string for archive display
   let winsCache = {};
@@ -1398,15 +1168,25 @@
     if (state === 'saved') setTimeout(() => { el.textContent = ''; el.className = 'sync-indicator'; }, 2000);
   }
 
-  // ── THREE WINS ────────────────────────────────────────────
+  // ── STREAK (read-only) ────────────────────────────────────
+  function isThreeWinDay(winsData) {
+    if (!winsData) return false;
+    const effectiveP = winsData.overridePhysical !== null && winsData.overridePhysical !== undefined ? winsData.overridePhysical : winsData.physical;
+    const effectiveM = winsData.overrideMental !== null && winsData.overrideMental !== undefined ? winsData.overrideMental : winsData.mental;
+    const effectiveS = winsData.overrideSpiritual !== null && winsData.overrideSpiritual !== undefined ? winsData.overrideSpiritual : winsData.spiritual;
+    return effectiveP && effectiveM && effectiveS;
+  }
 
-  // State for today's wins
-  let todayWins = { physical: null, mental: null, spiritual: null };
-  let todayWinsOverrides = { physical: null, mental: null, spiritual: null };
-  let todayWinsNotes = { physical: '', mental: '', spiritual: '' };
+  async function loadStreak() {
+    const snap = await getDoc(streakRef());
+    const total = snap.exists() ? (snap.data().total ?? 0) : 0;
+    document.getElementById('streakTotal').textContent = total;
+  }
+
+  /* ── OBSOLETE WINS/EVAL FUNCTIONS — commented out ──────────
+     Evaluation, overrides, today's wins panel all live in threedailywins.com.
 
   const winsRef = () => doc(db, 'wins', todayStr());
-  const streakRef = () => doc(db, 'meta', 'streak');
 
   // Load today's existing wins from Firebase
   async function loadTodayWins() {
@@ -1580,7 +1360,9 @@ Respond ONLY with valid JSON, no other text:
     await updateStreak();
   };
 
-  // ── STREAK ────────────────────────────────────────────────
+  */ // ── END OBSOLETE EDIT FUNCTIONS ───────────────────────
+
+  // ── STREAK HELPER (used by archive rendering) ─────────────
   function isThreeWinDay(winsData) {
     if (!winsData) return false;
     const effectiveP = winsData.overridePhysical !== null && winsData.overridePhysical !== undefined ? winsData.overridePhysical : winsData.physical;
@@ -1591,16 +1373,8 @@ Respond ONLY with valid JSON, no other text:
 
   async function loadStreak() {
     const snap = await getDoc(streakRef());
-    if (!snap.exists()) {
-      document.getElementById('streakCurrent').textContent = '0';
-      document.getElementById('streakTotal').textContent = '0';
-      document.getElementById('streakBest').textContent = '0';
-      return;
-    }
-    const d = snap.data();
-    document.getElementById('streakCurrent').textContent = d.current ?? 0;
-    document.getElementById('streakTotal').textContent = d.total ?? 0;
-    document.getElementById('streakBest').textContent = d.best ?? 0;
+    const total = snap.exists() ? (snap.data().total ?? 0) : 0;
+    document.getElementById('streakTotal').textContent = total;
   }
 
   async function updateStreak() {
@@ -1759,9 +1533,6 @@ Respond ONLY valid JSON — no other text:
       alert('Error evaluating week — check console for details.');
     }
 
-    btn.disabled = false;
-    btn.textContent = '⭐ Evaluate Week';
-  };
 
 </script>
 </body>
