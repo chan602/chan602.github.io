@@ -577,37 +577,11 @@
   }
 
   async function loadWeeklyHistory() {
+    // Read only from weeklyArchive — frozen historical records.
+    // The live 'weekly' collection is no longer read here; it belongs to threedailywins.com.
     const q = query(collection(db, 'weeklyArchive'), orderBy('archivedAt', 'desc'), limit(showAllHistory ? 52 : 8));
     const snap = await getDocs(q);
     weeklyHistory = snap.docs.map(d => d.data());
-
-    const archivedKeys = new Set(weeklyHistory.map(w => w.weekKey));
-    const weeksToCheck = [];
-    for (let i = 1; i <= 12; i++) {
-      const d = new Date(); d.setDate(d.getDate() - (i * 7));
-      const day = d.getDay();
-      const diffToMon = (day === 0) ? -6 : 1 - day;
-      const mon = new Date(d); mon.setDate(d.getDate() + diffToMon);
-      const jan1 = new Date(mon.getFullYear(), 0, 1);
-      const wk = Math.ceil(((mon - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-      const wkKey = `${mon.getFullYear()}-W${String(wk).padStart(2,'0')}`;
-      if (!archivedKeys.has(wkKey)) weeksToCheck.push({ wkKey, mon });
-    }
-    await Promise.all(weeksToCheck.map(async ({ wkKey, mon }) => {
-      const wSnap = await getDoc(doc(db, 'weekly', wkKey));
-      if (wSnap.exists()) {
-        const wTasks = wSnap.data().tasks || [];
-        if (wTasks.length > 0) {
-          weeklyHistory.push({
-            weekKey: wkKey,
-            weekStart: mon.toLocaleDateString('en-CA'),
-            wTasks, dTasks: [],
-            summary: `${wTasks.filter(t=>t.done).length}/${wTasks.length} weekly goals completed`,
-            archivedAt: mon.getTime(), backfilled: true
-          });
-        }
-      }
-    }));
     weeklyHistory.sort((a, b) => b.archivedAt - a.archivedAt);
     await loadHistory();
   }
