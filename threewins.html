@@ -52,11 +52,10 @@
   .profile-frame {
     width: 100%; border: 1px solid var(--line); border-radius: 6px;
     overflow: hidden; background: var(--card);
-    min-height: 600px;
   }
   .profile-frame iframe {
     width: 100%; border: none; display: block;
-    min-height: 600px;
+    height: 800px;
   }
 
   /* RESPONSIVE */
@@ -129,25 +128,12 @@
       src="https://chan602.github.io/threedailywins/u/chan602"
       title="Nathan Chan – Three Daily Wins profile"
       loading="lazy"
-      scrolling="no"
     ></iframe>
   </div>
 
 </main>
 
-<script>
-  // Attempt to auto-size iframe to its content height (works since same GitHub Pages origin).
-  // If that ever fails cross-origin, falls back to a fixed generous height.
-  const frame = document.getElementById('profileFrame');
-  frame.addEventListener('load', function() {
-    try {
-      const h = frame.contentDocument.body.scrollHeight;
-      if (h > 200) frame.style.height = h + 'px';
-    } catch(e) {
-      frame.style.height = '900px';
-    }
-  });
-</script>
+
 
 </body>
 </html>
