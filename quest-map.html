@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nathan Chan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:      #0d1117;
+      --surface: #131a22;
+      --border:  #1e2830;
+      --ink:     #dce6ef;
+      --muted:   #4a5c6a;
+      --sub:     #2a3640;
+
+      --c-quest:   #4d8fc7;
+      --c-income:  #3d9e6b;
+      --c-making:  #c47d35;
+      --c-brand:   #5b85b8;
+
+      --tile: 88px;
+      --gap:  6px;
+    }
+
+    /* ── BASE ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 2rem 5rem;
+    }
+
+    /* centered content wrapper — shrinks to fit, always centered */
+    .page-wrap {
+      width: fit-content;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 3.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .header-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin-bottom: 0.35rem;
+    }
+
+    .header-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* edit mode toggle */
+    .edit-toggle {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .edit-toggle:hover      { color: var(--ink); border-color: var(--muted); }
+    .edit-toggle.is-active  { color: var(--c-quest); border-color: var(--c-quest); }
+
+    /* ── PAGE LAYOUT ────────────────────────────────────── */
+    /* table section on the left, mission log sidebar on the right */
+    .page-layout {
+      display: flex;
+      gap: 3rem;
+      align-items: flex-start;
+    }
+
+    /* ── TABLE SECTION ──────────────────────────────────── */
+    .table-wrap {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .table-right {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── ROW LABELS ─────────────────────────────────────── */
+    .row-labels {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    .row-label {
+      height: var(--tile);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.75rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--label-color, var(--muted));
+      white-space: nowrap;
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── GRID ───────────────────────────────────────────── */
+    .table-grid {
+      display: grid;
+      grid-template-columns: repeat(4, var(--tile));
+      grid-template-rows: repeat(4, var(--tile));
+      gap: var(--gap);
+    }
+
+    /* ── ELEMENT TILES ──────────────────────────────────── */
+    .element {
+      width: var(--tile);
+      height: var(--tile);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--el-color, var(--border));
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      padding: 8px 6px 6px;
+      transition: border-color 0.16s, background 0.16s, opacity 0.16s, transform 0.12s;
+      user-select: none;
+    }
+
+    .element:hover    { background: #19222c; border-color: var(--el-color); transform: translateY(-2px); }
+    .element.is-active { background: #19222c; border-color: var(--el-color); box-shadow: 0 0 0 1px var(--el-color); }
+    .element.is-dimmed { opacity: 0.18; transform: none; }
+
+    .el-num {
+      position: absolute;
+      top: 6px; left: 7px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--muted);
+    }
+
+    .el-sym {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.45rem;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .el-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.48rem;
+      color: var(--muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* progress bar under element name */
+    .el-progress {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: var(--el-color);
+      opacity: 0.5;
+      transition: width 0.4s ease;
+      border-radius: 0 0 2px 2px;
+    }
+
+    /* ── DETAIL PANEL ───────────────────────────────────── */
+    .detail-panel {
+      width: 100%;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.28s ease, margin-top 0.28s ease;
+    }
+
+    .detail-panel.is-open { max-height: 600px; margin-top: 0.75rem; }
+
+    .detail-inner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--panel-color, var(--border));
+      border-radius: 2px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 1.75rem;
+      align-items: flex-start;
+    }
+
+    .detail-sym {
+      font-family: 'DM Mono', monospace;
+      font-size: 2.6rem;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      flex-shrink: 0;
+    }
+
+    .detail-divider {
+      width: 1px;
+      align-self: stretch;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .detail-body { flex: 1; min-width: 0; }
+
+    .detail-cat {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--panel-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-name {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.3rem;
+    }
+
+    .detail-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.6;
+      margin-bottom: 0.85rem;
+    }
+
+    /* ── GOALS LIST ─────────────────────────────────────── */
+    .goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .goal-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.32rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .goal-row:last-child { border-bottom: none; }
+
+    /* checkbox */
+    .goal-check {
+      width: 13px;
+      height: 13px;
+      border: 1px solid var(--muted);
+      border-radius: 1px;
+      background: transparent;
+      cursor: default;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, background 0.15s;
+      padding: 0;
+    }
+
+    /* in edit mode, checkboxes become interactive */
+    .is-edit-mode .goal-check { cursor: pointer; }
+    .is-edit-mode .goal-check:hover { border-color: var(--panel-color); }
+
+    .goal-check.is-done {
+      background: var(--panel-color);
+      border-color: var(--panel-color);
+    }
+
+    /* checkmark SVG inside */
+    .check-icon { display: none; }
+    .goal-check.is-done .check-icon { display: block; }
+
+    .goal-label {
+      font-size: 0.74rem;
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .goal-label.is-done {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-color: var(--sub);
+    }
+
+    .goal-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* delete button — only visible in edit mode */
+    .goal-delete {
+      width: 16px;
+      height: 16px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      transition: color 0.15s;
+      padding: 0;
+    }
+
+    .goal-delete:hover { color: #c45d5d; }
+    .is-edit-mode .goal-delete { display: flex; }
+
+    /* ── ADD GOAL INPUT ─────────────────────────────────── */
+    .goal-add {
+      display: none;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .is-edit-mode .goal-add { display: flex; }
+
+    .goal-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.73rem;
+      padding: 0.35rem 0.6rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .goal-input:focus { border-color: var(--panel-color); }
+    .goal-input::placeholder { color: var(--muted); }
+
+    .goal-add-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      padding: 0.35rem 0.65rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .goal-add-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+    /* ── HINT ───────────────────────────────────────────── */
+    .hint {
+      margin-top: 1.25rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.52rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--sub);
+      transition: opacity 0.3s;
+      align-self: center;
+    }
+
+    .hint.is-hidden { opacity: 0; }
+
+    /* ── SIDEBAR ────────────────────────────────────────── */
+    .sidebar {
+      width: 210px;
+      flex-shrink: 0;
+      padding-top: 0.1rem;
+    }
+
+    .sidebar-header {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.85rem;
+    }
+
+    .sidebar-empty {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.54rem;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.6;
+    }
+
+    .timeline-entry {
+      padding: 0.6rem 0 0.6rem 0.75rem;
+      border-left: 2px solid var(--entry-color, var(--border));
+      margin-bottom: 0.5rem;
+    }
+
+    .entry-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.2rem;
+    }
+
+    .entry-sym {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      font-weight: 500;
+      color: var(--entry-color);
+      margin-right: 0.35rem;
+    }
+
+    .entry-label {
+      font-size: 0.72rem;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    /* ── LOADING STATE ──────────────────────────────────── */
+    .loading-msg {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.54rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ── CENTERED WRAPPER ───────────────────────────────────────── -->
+<div class="page-wrap">
+
+<!-- ── HEADER ─────────────────────────────────────────────────── -->
+<header class="header">
+  <div>
+    <div class="header-name">Nathan Chan</div>
+    <div class="header-sub">Quest Map — What I'm building toward</div>
+  </div>
+  <button class="edit-toggle" id="editToggle">Edit</button>
+</header>
+
+<!-- ── PAGE LAYOUT ────────────────────────────────────────────── -->
+<div class="page-layout">
+
+  <!-- table section -->
+  <div>
+    <div class="table-wrap">
+      <div class="row-labels" id="rowLabels"></div>
+      <div class="table-right">
+        <div class="table-grid"   id="tableGrid"></div>
+        <div class="detail-panel" id="detailPanel">
+          <div class="detail-inner" id="detailInner"></div>
+        </div>
+        <div class="hint" id="hint">Select an element</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- mission log sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">Mission Log</div>
+    <div id="sidebarContent">
+      <div class="sidebar-empty">No completed goals yet.</div>
+    </div>
+  </aside>
+
+</div>
+
+</div><!-- /.page-wrap -->
+
+
+<script>
+// ── FIREBASE CONFIG ─────────────────────────────────────────────
+// NOTE: After building, set Firestore rules for project nathan-todo-593cf
+// to allow reads/writes on the questmap collection. See README note below.
+const FB_PROJECT  = 'nathan-todo-593cf';
+const FB_API_KEY  = 'AIzaSyCGviyNZCiX5eAzjvV4qWIBGS3OD4sStVM';
+const COLLECTION  = 'questmap';
+const BASE_URL    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
+
+// ── AUTH ────────────────────────────────────────────────────────
+const EDIT_PW    = 'meow';
+const SESSION_KEY = 'nc_qm_unlocked';
+
+
+// ── CATEGORIES & ELEMENTS ───────────────────────────────────────
+// Goals are NOT defined here — they live in Firestore.
+// Edit ELEMENTS to update the structural tiles.
+
+const CATEGORIES = {
+  quest:  { label: 'Main Quest',     color: '#4d8fc7' },
+  income: { label: 'Income Engine',  color: '#3d9e6b' },
+  making: { label: 'Making Things',  color: '#c47d35' },
+  brand:  { label: 'Personal Brand', color: '#5b85b8' },
+};
+
+const ELEMENTS = [
+  { num: 1,  sym: 'Md',  name: 'Medicine',         cat: 'quest',  row: 1, col: 1, desc: 'The long game. Everything else is in service of this.' },
+  { num: 2,  sym: 'Bio', name: 'Biochemistry',      cat: 'quest',  row: 1, col: 2, desc: 'UW Senior. Graduating 2026. Strong STEM foundation.' },
+  { num: 3,  sym: 'Ems', name: 'EMS',               cat: 'quest',  row: 1, col: 3, desc: 'NREMT-certified. Clinical hours in the field.' },
+  { num: 4,  sym: 'Res', name: 'Research',          cat: 'quest',  row: 1, col: 4, desc: 'Post-bac lab position. Structural biology, immunology.' },
+  { num: 5,  sym: 'Ven', name: 'Ventures',          cat: 'income', row: 2, col: 3, desc: 'Building financial independence before med school.' },
+  { num: 6,  sym: 'Svc', name: 'Services',          cat: 'income', row: 2, col: 4, desc: 'High-value work. Trading skill for capital.' },
+  { num: 7,  sym: '3DW', name: 'Three Daily Wins',  cat: 'making', row: 3, col: 1, desc: 'Multi-user habit tracking PWA. React + Firebase. Active users.' },
+  { num: 8,  sym: 'Imm', name: 'Immunocascade',     cat: 'making', row: 3, col: 2, desc: 'Interactive immunology learning game. Vanilla JS + SVG.' },
+  { num: 9,  sym: 'Prt', name: 'Portfolio',         cat: 'making', row: 3, col: 3, desc: 'chan602.com. Always evolving.' },
+  { num: 10, sym: 'Clb', name: 'Climbing',          cat: 'brand',  row: 4, col: 1, desc: 'V11 boulderer. Two years of consistent content.' },
+  { num: 11, sym: 'Cnt', name: 'Content',           cat: 'brand',  row: 4, col: 2, desc: 'Growing presence in the climbing community.' },
+];
+
+const ROW_LABELS = [
+  { label: 'Main Quest',     cat: 'quest'  },
+  { label: 'Income',         cat: 'income' },
+  { label: 'Making Things',  cat: 'making' },
+  { label: 'Personal Brand', cat: 'brand'  },
+];
+
+// Placeholder goals — seeded automatically on first load if Firestore is empty.
+// Nathan can delete/replace these in edit mode.
+const SEED_GOALS = [
+  { sym: 'Md',  label: 'Secure post-bac research position'       },
+  { sym: 'Md',  label: 'Complete MCAT (target 515+)'             },
+  { sym: 'Md',  label: 'Accumulate 500+ clinical hours'          },
+  { sym: 'Md',  label: 'Submit medical school applications'       },
+  { sym: 'Bio', label: 'Graduate UW with Biochemistry degree'    },
+  { sym: 'Bio', label: 'Maintain strong GPA through senior year' },
+  { sym: 'Ems', label: 'Secure EMT position in Seattle'          },
+  { sym: 'Ems', label: 'Complete 200+ field hours'               },
+  { sym: 'Res', label: 'Join a lab (structural biology / immunology)' },
+  { sym: 'Res', label: 'Contribute to a publication or poster'   },
+  { sym: 'Res', label: 'Present at lab meeting or symposium'     },
+  { sym: 'Ven', label: 'Launch first revenue-generating venture' },
+  { sym: 'Ven', label: 'Reach consistent monthly income'         },
+  { sym: 'Svc', label: 'Build client base in a high-value skill' },
+  { sym: 'Svc', label: 'Establish recurring income stream'       },
+  { sym: '3DW', label: 'Ship iOS / Android app'                  },
+  { sym: '3DW', label: 'Reach 100 active users'                  },
+  { sym: '3DW', label: 'Launch Pro subscription tier'            },
+  { sym: 'Imm', label: 'Complete polish pass on all 5 levels'    },
+  { sym: 'Imm', label: 'Feature on chan602.com'                  },
+  { sym: 'Imm', label: 'Share with a biology educator'           },
+  { sym: 'Prt', label: 'Complete portfolio redesign'             },
+  { sym: 'Prt', label: 'Ship quest map page'                     },
+  { sym: 'Prt', label: 'Document all major projects publicly'    },
+  { sym: 'Clb', label: 'Send first V12'                          },
+  { sym: 'Clb', label: 'Secure first gear sponsorship'           },
+  { sym: 'Clb', label: 'Reach 5K followers'                      },
+  { sym: 'Cnt', label: 'Post consistently for 6 months straight' },
+  { sym: 'Cnt', label: 'Land first paid collaboration'           },
+];
+
+
+// ── STATE ────────────────────────────────────────────────────────
+let activeId  = null;   // currently expanded element sym
+let editMode  = false;
+let goals     = [];     // [{id, elementSym, label, completed, completedAt, createdAt}]
+
+
+// ── DOM REFS ──────────────────────────────────────────────────────
+const labelsEl     = document.getElementById('rowLabels');
+const gridEl       = document.getElementById('tableGrid');
+const panelEl      = document.getElementById('detailPanel');
+const innerEl      = document.getElementById('detailInner');
+const hintEl       = document.getElementById('hint');
+const editToggleEl = document.getElementById('editToggle');
+const sidebarEl    = document.getElementById('sidebarContent');
+
+const elEls = {}; // sym → tile HTMLElement
+
+
+// ── FIRESTORE HELPERS ─────────────────────────────────────────────
+
+// Parse a raw Firestore document into a plain object
+function parseDoc(doc) {
+  const id = doc.name.split('/').pop();
+  const f  = doc.fields || {};
+  return {
+    id,
+    elementSym:  f.elementSym?.stringValue   || '',
+    label:       f.label?.stringValue         || '',
+    completed:   f.completed?.booleanValue    || false,
+    completedAt: f.completedAt?.timestampValue || null,
+    createdAt:   f.createdAt?.timestampValue   || '',
+  };
+}
+
+async function fetchGoals() {
+  try {
+    const res  = await fetch(`${BASE_URL}/${COLLECTION}?key=${FB_API_KEY}`);
+    const data = await res.json();
+    if (!data.documents) return [];
+    return data.documents.map(parseDoc);
+  } catch (e) {
+    console.error('fetchGoals failed:', e);
+    return [];
+  }
+}
+
+async function createGoal(elementSym, label) {
+  const body = {
+    fields: {
+      elementSym:  { stringValue:  elementSym },
+      label:       { stringValue:  label      },
+      completed:   { booleanValue: false       },
+      completedAt: { nullValue:    null        },
+      createdAt:   { timestampValue: new Date().toISOString() },
+    }
+  };
+  const res  = await fetch(`${BASE_URL}/${COLLECTION}?key=${FB_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return parseDoc(await res.json());
+}
+
+async function toggleGoal(id, completed) {
+  const completedAt = completed ? new Date().toISOString() : null;
+  const url  = `${BASE_URL}/${COLLECTION}/${id}`
+    + `?updateMask.fieldPaths=completed&updateMask.fieldPaths=completedAt`
+    + `&key=${FB_API_KEY}`;
+  const body = {
+    fields: {
+      completed:   { booleanValue: completed },
+      completedAt: completed
+        ? { timestampValue: completedAt }
+        : { nullValue: null },
+    }
+  };
+  await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return completedAt;
+}
+
+async function deleteGoal(id) {
+  await fetch(`${BASE_URL}/${COLLECTION}/${id}?key=${FB_API_KEY}`, {
+    method: 'DELETE',
+  });
+}
+
+
+// ── DATE FORMATTER ────────────────────────────────────────────────
+function fmtDate(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+
+// ── BUILD TABLE (one-time DOM construction) ───────────────────────
+function buildTable() {
+  ROW_LABELS.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'row-label';
+    div.textContent = r.label;
+    div.style.setProperty('--label-color', CATEGORIES[r.cat].color);
+    labelsEl.appendChild(div);
+  });
+
+  ELEMENTS.forEach(el => {
+    const cat  = CATEGORIES[el.cat];
+    const tile = document.createElement('div');
+    tile.className = 'element';
+    tile.id = `tile-${el.sym}`;
+    tile.style.cssText = `--el-color: ${cat.color}; grid-column: ${el.col}; grid-row: ${el.row};`;
+
+    tile.innerHTML = `
+      <span class="el-num">${el.num}</span>
+      <span class="el-sym">${el.sym}</span>
+      <span class="el-name">${el.name}</span>
+      <div class="el-progress" style="width:0%"></div>
+    `;
+
+    tile.addEventListener('click', () => handleTileClick(el.sym));
+    gridEl.appendChild(tile);
+    elEls[el.sym] = tile;
+  });
+}
+
+
+// ── UPDATE TILE PROGRESS BARS ─────────────────────────────────────
+function updateTileProgress() {
+  ELEMENTS.forEach(el => {
+    const elGoals  = goals.filter(g => g.elementSym === el.sym);
+    const done     = elGoals.filter(g => g.completed).length;
+    const total    = elGoals.length;
+    const pct      = total > 0 ? Math.round((done / total) * 100) : 0;
+    const bar      = elEls[el.sym]?.querySelector('.el-progress');
+    if (bar) bar.style.width = pct + '%';
+  });
+}
+
+
+// ── RENDER DETAIL PANEL ───────────────────────────────────────────
+function renderPanel(sym) {
+  if (!sym) return;
+  const el  = ELEMENTS.find(e => e.sym === sym);
+  const cat = CATEGORIES[el.cat];
+  const elGoals = goals
+    .filter(g => g.elementSym === sym)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  const goalsHTML = elGoals.map(g => `
+    <div class="goal-row" data-id="${g.id}">
+      <button class="goal-check ${g.completed ? 'is-done' : ''}"
+              data-id="${g.id}" data-done="${g.completed}"
+              aria-label="${g.completed ? 'Uncheck' : 'Check'} goal">
+        <svg class="check-icon" width="8" height="6" viewBox="0 0 8 6" fill="none">
+          <path d="M1 3L3 5L7 1" stroke="var(--bg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="goal-label ${g.completed ? 'is-done' : ''}">${g.label}</span>
+      ${g.completed && g.completedAt
+        ? `<span class="goal-date">${fmtDate(g.completedAt)}</span>`
+        : ''}
+      <button class="goal-delete" data-id="${g.id}" aria-label="Delete goal">×</button>
+    </div>
+  `).join('');
+
+  innerEl.style.setProperty('--panel-color', cat.color);
+  innerEl.innerHTML = `
+    <div class="detail-sym">${el.sym}</div>
+    <div class="detail-divider"></div>
+    <div class="detail-body">
+      <div class="detail-cat">${cat.label}</div>
+      <div class="detail-name">${el.name}</div>
+      <div class="detail-desc">${el.desc}</div>
+      <div class="goals-list">${goalsHTML}</div>
+      <div class="goal-add">
+        <input class="goal-input" type="text" placeholder="Add a goal…" maxlength="120" />
+        <button class="goal-add-btn">Add</button>
+      </div>
+    </div>
+  `;
+
+  // Wire up goal interactions
+  innerEl.querySelectorAll('.goal-check').forEach(btn => {
+    btn.addEventListener('click', e => {
+      if (!editMode) return;
+      handleToggleGoal(btn.dataset.id, btn.dataset.done !== 'true');
+    });
+  });
+
+  innerEl.querySelectorAll('.goal-delete').forEach(btn => {
+    btn.addEventListener('click', () => handleDeleteGoal(btn.dataset.id));
+  });
+
+  const input   = innerEl.querySelector('.goal-input');
+  const addBtn  = innerEl.querySelector('.goal-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => handleAddGoal(sym, input));
+    input?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleAddGoal(sym, input);
+    });
+  }
+}
+
+
+// ── RENDER SIDEBAR TIMELINE ───────────────────────────────────────
+function renderTimeline() {
+  const done = goals
+    .filter(g => g.completed && g.completedAt)
+    .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+
+  if (done.length === 0) {
+    sidebarEl.innerHTML = '<div class="sidebar-empty">No completed goals yet.</div>';
+    return;
+  }
+
+  sidebarEl.innerHTML = done.map(g => {
+    const el  = ELEMENTS.find(e => e.sym === g.elementSym);
+    const cat = el ? CATEGORIES[el.cat] : null;
+    const color = cat ? cat.color : 'var(--muted)';
+    return `
+      <div class="timeline-entry" style="--entry-color: ${color}">
+        <div class="entry-date">${fmtDate(g.completedAt)}</div>
+        <div>
+          <span class="entry-sym">${g.elementSym}</span>
+          <span class="entry-label">${g.label}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+
+// ── INTERACTION HANDLERS ──────────────────────────────────────────
+
+function handleTileClick(sym) {
+  if (activeId === sym) {
+    activeId = null;
+    Object.values(elEls).forEach(t => t.classList.remove('is-active', 'is-dimmed'));
+    panelEl.classList.remove('is-open');
+    hintEl.classList.remove('is-hidden');
+    return;
+  }
+  activeId = sym;
+  Object.entries(elEls).forEach(([s, t]) => {
+    t.classList.toggle('is-active', s === sym);
+    t.classList.toggle('is-dimmed', s !== sym);
+  });
+  renderPanel(sym);
+  panelEl.classList.add('is-open');
+  hintEl.classList.add('is-hidden');
+}
+
+async function handleToggleGoal(id, toComplete) {
+  const completedAt = await toggleGoal(id, toComplete);
+  const g = goals.find(g => g.id === id);
+  if (g) {
+    g.completed   = toComplete;
+    g.completedAt = toComplete ? completedAt : null;
+  }
+  renderPanel(activeId);
+  renderTimeline();
+  updateTileProgress();
+}
+
+async function handleDeleteGoal(id) {
+  await deleteGoal(id);
+  goals = goals.filter(g => g.id !== id);
+  renderPanel(activeId);
+  renderTimeline();
+  updateTileProgress();
+}
+
+async function handleAddGoal(sym, input) {
+  const label = input.value.trim();
+  if (!label) return;
+  input.value = '';
+  input.disabled = true;
+  const newGoal = await createGoal(sym, label);
+  goals.push(newGoal);
+  renderPanel(sym);
+  updateTileProgress();
+}
+
+function handleEditToggle() {
+  if (!editMode) {
+    const pw = prompt('Enter password to edit:');
+    if (pw !== EDIT_PW) return;
+    sessionStorage.setItem(SESSION_KEY, '1');
+    editMode = true;
+    editToggleEl.textContent = 'Lock';
+    editToggleEl.classList.add('is-active');
+    document.body.classList.add('is-edit-mode');
+    if (activeId) renderPanel(activeId);
+  } else {
+    sessionStorage.removeItem(SESSION_KEY);
+    editMode = false;
+    editToggleEl.textContent = 'Edit';
+    editToggleEl.classList.remove('is-active');
+    document.body.classList.remove('is-edit-mode');
+    if (activeId) renderPanel(activeId);
+  }
+}
+
+// Collapse on background click
+document.addEventListener('click', e => {
+  if (!activeId) return;
+  if (e.target.closest('.element') || e.target.closest('.detail-panel')) return;
+  activeId = null;
+  Object.values(elEls).forEach(t => t.classList.remove('is-active', 'is-dimmed'));
+  panelEl.classList.remove('is-open');
+  hintEl.classList.remove('is-hidden');
+});
+
+
+// ── SEED ──────────────────────────────────────────────────────────
+// Runs once if Firestore has no goals. Seeds the placeholder list.
+async function seedIfEmpty() {
+  if (goals.length > 0) return;
+  console.log('Seeding placeholder goals…');
+  for (const g of SEED_GOALS) {
+    const created = await createGoal(g.sym, g.label);
+    goals.push(created);
+  }
+}
+
+
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  buildTable();
+  editToggleEl.addEventListener('click', handleEditToggle);
+
+  // Restore edit mode if session key is set
+  if (sessionStorage.getItem(SESSION_KEY)) {
+    editMode = true;
+    editToggleEl.textContent = 'Lock';
+    editToggleEl.classList.add('is-active');
+    document.body.classList.add('is-edit-mode');
+  }
+
+  // Fetch goals, seed if empty
+  goals = await fetchGoals();
+  await seedIfEmpty();
+
+  updateTileProgress();
+  renderTimeline();
+});
+</script>
+
+<!--
+  ── FIRESTORE RULES NOTE ──────────────────────────────────────────
+  Add this rule to your nathan-todo-593cf project in Firebase Console
+  → Firestore → Rules, to allow public reads and writes on questmap:
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /questmap/{doc} {
+        allow read, write: if true;
+      }
+      // keep existing rules for other collections below
+    }
+  }
+  ─────────────────────────────────────────────────────────────────
+-->
+
+</body>
+</html>
