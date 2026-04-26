@@ -113,12 +113,17 @@
   .tile-tag { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
 
   /* MAIN CONTENT */
-  main { margin-left: 180px; padding: 2rem 2.5rem 4rem; max-width: 820px; }
+  main {
+    margin-left: calc(180px + max(0px, (100vw - 180px - 720px) / 2));
+    margin-right: auto;
+    padding: 2rem 2.5rem 4rem;
+    max-width: 720px;
+  }
 
   /* PAGE HEADER */
   .page-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; }
   .page-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 0.3rem; }
-  #modeBadge { margin-bottom: 2rem; }
+  #modeBadge { margin-top: 0.5rem; }
   .view-only-badge {
     display: inline-block; font-size: 0.72rem; background: #fff3cd; color: #856404;
     border: 1px solid #ffc107; padding: 0.2rem 0.6rem; border-radius: 20px;
@@ -149,6 +154,19 @@
     font-weight: 500; letter-spacing: 0.04em; transition: background 0.2s; margin-top: 0.5rem;
   }
   .app-link:hover { background: #145a96; }
+
+  /* APP EMBED */
+  .embed-label {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.75rem; display: block;
+  }
+  .profile-frame {
+    width: 100%; border: 1px solid var(--line); border-radius: 6px;
+    overflow: hidden; background: var(--card); margin-bottom: 2.5rem;
+  }
+  .profile-frame iframe {
+    width: 100%; border: none; display: block; height: 800px;
+  }
 
   /* NEW POST FORM */
   .post-form {
@@ -239,8 +257,9 @@
   }
 </style>
 <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="stylesheet" href="canvas-system.css"/>
 </head>
-<body>
+<body class="canvas-page">
 
 <!-- LOCK -->
 <div id="lockScreen" class="hidden">
@@ -261,10 +280,8 @@
 <nav>
   <a class="nav-name" href="index.html">Nathan Chan</a>
   <ul class="nav-links">
-    <li><a href="index.html#resume">Resume</a></li>
-    <li><a href="index.html#goals">Goals</a></li>
-    <li><a href="index.html#activities">Activities</a></li>
-    <li><a href="threewins.html">Three Wins</a></li>
+    <li><a href="download/nathan-chan-resume.pdf" target="_blank">Resume</a></li>
+    <li><a href="activities.html">Activities</a></li>
     <li><a href="devblog.html" class="active">Dev Blog</a></li>
     <li><a href="climbing.html">Climbing</a></li>
     <li><a href="gallery.html">Gallery</a></li>
@@ -338,22 +355,32 @@
 
   <!-- MAIN -->
   <main>
-    <p class="page-label" id="pageLabel">Building in Public · threedailywins.com</p>
-    <h1 class="page-title">Dev Blog</h1>
-    <div id="modeBadge"></div>
+    <div class="page-header-card">
+      <p class="page-label" id="pageLabel">Building in Public · threedailywins.com</p>
+      <h1 class="page-title">Dev Blog</h1>
+      <div id="modeBadge"></div>
+    </div>
 
     <!-- ORIGIN CARD -->
     <div class="origin-card">
-      <h2 id="originTitle">The Origin Story</h2>
+      <h2 id="originTitle">What are the Three Wins?</h2>
       <div id="originBody">
-        <p>
-          I built a structured, Firebase backed task logic paired with the Anthropic API for AI evaluation of my todo lists. The result lives on this site as <em>Three Wins</em>, a personal tracker for my daily physical, mental, and spiritual goals.
-        </p>
-        <p>
-          Now I'm working on scaling it. <strong>threedailywins.com</strong> is a multi-user app version with the same framework, built for friends and eventually anyone who wants to log and track their 3 win days. This blog tracks the build from idea through launch.
-          Thank you for reading!
-        </p>
+        <p>Each day, I aim to achieve three wins: a <strong>physical</strong>, <strong>mental</strong>, and <strong>spiritual</strong> win. This framework has circulated online in various forms, and I started using it because it works with my goal of being intentional across multiple dimensions of well-being. The definitions are intentionally flexible; what constitutes a "spiritual win" for me might be completely different for someone else. At its core, the system emphasizes three daily themes that make me feel fulfilled, accomplished, and well, beyond just being productive.</p>
+        <p>For years, I relied on handwritten to-do lists. I later experimented with tracking tasks with ChatGPT, hoping AI could track my tasks conveniently and explicitly evaluate three wins based on my personal parameters. However, I found that traditional to-do systems require consistent, structured logic, while AI is not well-suited to maintain that level of reliability. Tasks were sometimes misinterpreted, inconsistently tracked, or lost entirely. While the evaluation aspect was valuable, the system itself was not dependable.</p>
+        <p>This led me to create a hybrid solution: a structured, logic-driven task system paired with AI for evaluation rather than task management. At its base, a todo list is a classic, simple introductory CS project. For this project however, building a todo list that reliably handles real data, edge cases, and daily use was challenging. The designing, debugging, and optimizing added up more than I expected. In the end I developed a system that tracks and archives daily and weekly tasks, using the Anthropic API to evaluate progress and identify wins. This build lived on my website for a time before I went on to scale it into a live multi-user app that I'm immensely proud of. This blog tracks the build from idea through launch. Thank you for reading!</p>
         <a href="https://threedailywins.com" target="_blank" class="app-link">Check out threedailywins.com →</a>
+      </div>
+    </div>
+
+    <!-- APP EMBED (3DW tab only) -->
+    <div id="app-embed">
+      <span class="embed-label">Live profile · threedailywins.com</span>
+      <div class="profile-frame">
+        <iframe
+          src="https://chan602.github.io/threedailywins/u/chan602"
+          title="Nathan Chan – Three Daily Wins profile"
+          loading="lazy"
+        ></iframe>
       </div>
     </div>
 
@@ -417,10 +444,11 @@
     '3dw': {
       collection: 'devblog',
       label: 'Building in Public · threedailywins.com',
-      originTitle: 'The Origin Story',
+      originTitle: 'What are the Three Wins?',
       originHTML: `
-        <p>I built a structured, Firebase backed task logic paired with the Anthropic API for AI evaluation of my todo lists. The result lives on this site as <em>Three Wins</em>, a personal tracker for my daily physical, mental, and spiritual goals.</p>
-        <p>Now I'm working on scaling it. <strong>threedailywins.com</strong> is a multi-user app version with the same framework, built for friends and eventually anyone who wants to log and track their 3 win days. This blog tracks the build from idea through launch. Thank you for reading!</p>
+        <p>Each day, I aim to achieve three wins: a <strong>physical</strong>, <strong>mental</strong>, and <strong>spiritual</strong> win. This framework has circulated online in various forms, and I started using it because it works with my goal of being intentional across multiple dimensions of well-being. The definitions are intentionally flexible; what constitutes a "spiritual win" for me might be completely different for someone else. At its core, the system emphasizes three daily themes that make me feel fulfilled, accomplished, and well, beyond just being productive.</p>
+        <p>For years, I relied on handwritten to-do lists. I later experimented with tracking tasks with ChatGPT, hoping AI could track my tasks conveniently and explicitly evaluate three wins based on my personal parameters. However, I found that traditional to-do systems require consistent, structured logic, while AI is not well-suited to maintain that level of reliability. Tasks were sometimes misinterpreted, inconsistently tracked, or lost entirely. While the evaluation aspect was valuable, the system itself was not dependable.</p>
+        <p>This led me to create a hybrid solution: a structured, logic-driven task system paired with AI for evaluation rather than task management. At its base, a todo list is a classic, simple introductory CS project. For this project however, building a todo list that reliably handles real data, edge cases, and daily use was challenging. The designing, debugging, and optimizing added up more than I expected. In the end I developed a system that tracks and archives daily and weekly tasks, using the Anthropic API to evaluate progress and identify wins. This build lived on my website for a time before I went on to scale it into a live multi-user app that I'm immensely proud of. This blog tracks the build from idea through launch. Thank you for reading!</p>
         <a href="https://threedailywins.com" target="_blank" class="app-link">Check out threedailywins.com →</a>`,
     },
     'ic': {
@@ -428,8 +456,7 @@
       label: 'Building in Public · Immunocascade',
       originTitle: 'The Project',
       originHTML: `
-        <p>Immunocascade is an interactive immunology learning game built in vanilla JS and SVG. Each level puts you in the middle of an immune response — influenza, bacterial infection, COVID-19, allergy, cancer — and asks you to assemble the correct immune cells and signaling molecules in the right order.</p>
-        <p>Built from scratch as a side project, leveraging my biochemistry background. No framework, no build step — just cells.js, levels.js, canvas.js, and game.js. This blog tracks the build.</p>
+        <p>Immunocascade is an interactive immunology learning game built in vanilla JS and SVG. Each level puts you in the middle of an immune response (influenza, bacterial infection, COVID-19, allergy, cancer) and asks you to assemble the correct immune cells and signaling molecules in the right order.</p>
         <a href="https://chan602.com/immunocascade" target="_blank" class="app-link">Play Immunocascade →</a>`,
     },
     'qm': {
@@ -437,8 +464,7 @@
       label: 'Building in Public · Quest Map',
       originTitle: 'The Project',
       originHTML: `
-        <p>Quest Map is a personal goal tracker styled as a periodic table — each element is a goal domain (Medicine, EMS, Research, Ventures, Three Daily Wins, Immunocascade, and more). Backed by Firestore with a password-gated edit mode, click-to-expand detail panels, and a Mission Log for completed goals.</p>
-        <p>Built as both a portfolio piece and a personal clarity tool. Dark Arc'teryx aesthetic. This blog tracks the build.</p>
+        <p>Quest Map is a personal goal tracker styled as a periodic table. Each element is a goal domain (Medicine, EMS, Research, Ventures, Three Daily Wins, Immunocascade, and more). Backed by Firestore with a password gated edit mode, click to expand detail panels, and a Mission Log for completed goals.</p>
         <a href="quest-map.html" target="_blank" class="app-link">Open Quest Map →</a>`,
     },
   };
@@ -463,6 +489,7 @@
     document.getElementById('pageLabel').textContent = proj.label;
     document.getElementById('originTitle').textContent = proj.originTitle;
     document.getElementById('originBody').innerHTML = proj.originHTML;
+    document.getElementById('app-embed').style.display = key === '3dw' ? 'block' : 'none';
 
     loadPosts();
   };

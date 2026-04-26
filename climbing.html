@@ -155,17 +155,18 @@
   }
 </style>
  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="stylesheet" href="canvas-system.css"/>
 </head>
-<body>
+<body class="canvas-page">
 
 <!-- NAV -->
 <nav>
   <a class="nav-name" href="index.html">Nathan Chan</a>
   <ul class="nav-links">
-    <li><a href="index.html#resume">Resume</a></li>
-    <li><a href="index.html#goals">Goals</a></li>
-    <li><a href="index.html#activities">Activities</a></li>
-    <li><a href="threewins.html">Three Wins</a></li>
+    <li><a href="download/nathan-chan-resume.pdf" target="_blank">Resume</a></li>
+    <li><a href="activities.html">Activities</a></li>
+    <li><a href="devblog.html">Dev Blog</a></li>
+    <!-- <li><a href="threewins.html">Three Wins</a></li> merge 3w into devblog -->
    <!-- <li><a href="todo.html">Daily Tasks</a></li> hidden as I switch over the 3 wins, to avoid duplicate firestore calls.-->
     <li><a href="climbing.html" class="active">Climbing</a></li>
     <li><a href="gallery.html">Gallery</a></li>
@@ -179,9 +180,11 @@
 </nav>
 
 <main>
-  <p class="page-label">Training · Performance · Progress</p>
-  <h1 class="page-title">Climbing Log</h1>
-  <p class="page-sub">Live training data pulled from my session log. Tracking volume, intensity, and weighted performance over time.</p>
+  <div class="page-header-card">
+    <p class="page-label">Training · Performance · Progress</p>
+    <h1 class="page-title">Climbing Log</h1>
+    <p class="page-sub">Live training data pulled from my session log. Tracking volume, intensity, and weighted performance over time.</p>
+  </div>
 
   <!-- INSTAGRAM -->
   <div class="ig-wrap">

@@ -156,17 +156,18 @@
     #lb-prev, #lb-next { display: none; }
   }
 </style>
+<link rel="stylesheet" href="canvas-system.css"/>
 </head>
-<body>
+<body class="canvas-page">
 
 <!-- NAV -->
 <nav>
   <a class="nav-name" href="index.html">Nathan Chan</a>
   <ul class="nav-links">
-    <li><a href="index.html#resume">Resume</a></li>
-    <li><a href="index.html#goals">Goals</a></li>
-    <li><a href="index.html#activities">Activities</a></li>
-    <li><a href="threewins.html">Three Wins</a></li>
+    <li><a href="download/nathan-chan-resume.pdf" target="_blank">Resume</a></li>
+    <li><a href="activities.html">Activities</a></li>
+    <li><a href="devblog.html">Dev Blog</a></li>
+    <!--<li><a href="threewins.html">Three Wins</a></li> hidden as i merge 3w with dev blog-->
    <!-- <li><a href="todo.html">Daily Tasks</a></li> hidden as I switch over the 3 wins, to avoid duplicate firestore calls.-->
     <li><a href="climbing.html">Climbing</a></li>
     <li><a href="gallery.html" class="active">Gallery</a></li>
@@ -180,12 +181,12 @@
 </nav>
 
 <main>
-  <p class="page-label">Life Outside the Lab</p>
-  <h1 class="page-title">Activities Gallery</h1>
-  <p class="page-sub">Photos from healthcare outreach, climbing, and anything else I love.</p>
+  <div class="page-header-card">
+    <p class="page-label">Life Outside the Lab</p>
+    <h1 class="page-title">Activities Gallery</h1>
+    <p class="page-sub">Photos from healthcare outreach, climbing, and anything else I love.</p>
+  </div>
 
- <!-- Future message: did it! -->
- 
   <!-- JUMP NAV -->
   <div class="jump-nav">
     <a class="jump-pill" href="#healthcare">🌍 Healthcare Outreach</a>

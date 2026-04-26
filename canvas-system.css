@@ -1,0 +1,106 @@
+/* ============================================================
+   CANVAS DESIGN SYSTEM — chan602.com
+   Shared across index.html (canvas) and all sub-pages.
+   Load before any page-specific styles.
+   ============================================================ */
+
+:root {
+  --bg:     #f0f4f8;
+  --ink:    #0f1e2e;
+  --muted:  #5a6e82;
+  --accent: #1a6db5;
+  --line:   #ccd9e8;
+  --card:   #ffffff;
+  --dot:    #c0d0e0;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+}
+
+/* ── DOT GRID (canvas homepage background) ── */
+.canvas-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--dot) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+}
+
+/* ── SUB-PAGE BODY (windowed pages) ── */
+body.canvas-page {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--dot) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  min-height: 100vh;
+}
+
+/* ── DASHED THREAD (sub-pages — implies connection to home canvas) ── */
+.canvas-thread {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 56px;
+  border-top: 2px dashed var(--line);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.6;
+  transform: translateY(-50%);
+}
+
+/* ── PAGE HEADER CARD (sub-pages — section intro sits in a card on the dot grid) ── */
+.page-header-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 2rem 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* ── SUB-PAGE ENTRANCE ANIMATION ── */
+/* Canvas pan on index sells the exit. Sub-pages just need a clean arrival. */
+body.canvas-page main {
+  animation: page-enter 0.45s ease-out both;
+}
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+/* ── BACK-TO-HOME NAV (sub-pages) ── */
+.back-home {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: rgba(240, 244, 248, 0.92);
+  backdrop-filter: blur(6px);
+  transition: color 0.2s, border-color 0.2s;
+}
+.back-home:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.back-home svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}

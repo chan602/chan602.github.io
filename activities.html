@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Activities – Nathan Chan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="canvas-system.css"/>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 4rem;
+    background: rgba(240,244,248,0.93); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line); z-index: 100;
+  }
+  .nav-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; color: var(--ink); text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+  .nav-links a {
+    text-decoration: none; color: var(--muted);
+    font-size: 0.82rem; letter-spacing: 0.07em;
+    text-transform: uppercase; font-weight: 500; transition: color 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+  .nav-linkedin {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: var(--ink); color: #fff !important;
+    padding: 0.3rem 0.75rem; border-radius: var(--r-sm);
+    font-size: 0.75rem !important;
+    transition: background 0.2s !important;
+  }
+  .nav-linkedin svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
+  .nav-linkedin:hover { background: var(--accent) !important; }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 8rem 2rem 5rem;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-label {
+    font-size: 0.72rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent);
+    font-weight: 500; margin-bottom: 0.5rem;
+  }
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1.1; margin-bottom: 0.8rem;
+  }
+  .page-sub {
+    font-size: 0.95rem; color: var(--muted);
+    font-weight: 300; margin-bottom: 3rem; max-width: 520px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── ACTIVITIES GRID ── */
+  .act-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+  }
+  .act-item {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 1.5rem;
+    border-radius: var(--r-md);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    opacity: 0;
+    animation: fadeUp 0.55s ease both;
+  }
+  .act-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(26,109,181,0.08);
+  }
+  .act-icon {
+    font-size: 1.4rem; flex-shrink: 0;
+    background: var(--bg);
+    width: 2.6rem; height: 2.6rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+  }
+  .act-item h4 {
+    font-size: 0.92rem; font-weight: 500; margin-bottom: 0.25rem;
+    color: var(--ink);
+  }
+  .act-item p {
+    font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+  }
+  .act-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s;
+  }
+  .act-link:hover { opacity: 0.75; }
+  .act-links { display: flex; flex-direction: column; gap: 0.15rem; margin-top: 0.5rem; }
+
+  /* stagger animation delays */
+  .act-item:nth-child(1)  { animation-delay: 0.05s; }
+  .act-item:nth-child(2)  { animation-delay: 0.1s; }
+  .act-item:nth-child(3)  { animation-delay: 0.15s; }
+  .act-item:nth-child(4)  { animation-delay: 0.2s; }
+  .act-item:nth-child(5)  { animation-delay: 0.25s; }
+  .act-item:nth-child(6)  { animation-delay: 0.3s; }
+  .act-item:nth-child(7)  { animation-delay: 0.35s; }
+  .act-item:nth-child(8)  { animation-delay: 0.4s; }
+  .act-item:nth-child(9)  { animation-delay: 0.45s; }
+  .act-item:nth-child(10) { animation-delay: 0.5s; }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    margin-top: 4rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .page-footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 680px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    main { padding: 7rem 1rem 4rem; }
+    .act-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="canvas-page">
+
+<!-- CANVAS THREAD (decorative dashed line — visual link to home canvas) -->
+<div class="canvas-thread"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-name" href="index.html">Nathan Chan</a>
+  <ul class="nav-links">
+    <li><a href="download/nathan-chan-resume.pdf" target="_blank">Resume</a></li>
+    <li><a href="activities.html" class="active">Activities</a></li>
+    <li><a href="devblog.html">Dev Blog</a></li>
+    <li><a href="climbing.html">Climbing</a></li>
+    <li><a href="gallery.html">Gallery</a></li>
+    <li>
+      <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank" class="nav-linkedin">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<main>
+
+  <div class="page-header-card">
+    <p class="page-label">Outside the Classroom</p>
+    <h1 class="page-title">Activities</h1>
+    <p class="page-sub">
+      Things I train, build, and explore outside of coursework.
+      From competitive climbing to app development to emergency medicine.
+    </p>
+  </div>
+
+  <div class="act-grid">
+
+    <div class="act-item">
+      <div class="act-icon">🧗</div>
+      <div>
+        <h4>Competitive Rock Climbing</h4>
+        <p>Training 15–20 hours/week in indoor bouldering across 4 gyms and 6 training boards. USAC regional competitor (7th place). Working toward double-digit outdoor grades.</p>
+        <div class="act-links">
+          <a class="act-link" href="climbing.html">View training log →</a>
+          <a class="act-link" href="gallery.html#climbing">View gallery →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🚑</div>
+      <div>
+        <h4>Emergency Medical Technician</h4>
+        <p>NREMT certified with clinical experience at Harborview Medical Center. Passionate about pre-hospital medicine and emergency care.</p>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">💻</div>
+      <div>
+        <h4>App Development &amp; Web Building</h4>
+        <p>Building full-stack web apps from scratch — including a multi-user habit tracker with AI evaluation, Firebase, and React. Also co-founded a web design business targeting real estate agents.</p>
+        <a class="act-link" href="devblog.html">See development log →</a>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🌍</div>
+      <div>
+        <h4>Healthcare Outreach</h4>
+        <p>Team Lead for UW Healthcare Alternative Spring Break — shadowing rural providers and engaging in community health service-learning.</p>
+        <a class="act-link" href="gallery.html#healthcare">View gallery →</a>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🥋</div>
+      <div>
+        <h4>Wrestling &amp; MMA</h4>
+        <p>Training in combat sports as a complement to climbing — both demand full-body strength, technique, and mental toughness.</p>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🖨️</div>
+      <div>
+        <h4>3D Printing &amp; Engineering</h4>
+        <p>Design and print functional objects, including climbing-related hacks and tools. Enjoy the overlap between engineering problem-solving and hands-on craft.</p>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🪵</div>
+      <div>
+        <h4>Woodworking</h4>
+        <p>Building and crafting with wood as a hands-on hobby that balances time in the lab and gym.</p>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">♟️</div>
+      <div>
+        <h4>Chess &amp; Strategy Games</h4>
+        <p>Enjoy chess and other strategy games as mental training — the same analytical thinking that shows up in research and climbing.</p>
+        <a class="act-link" href="https://www.chess.com/member/chan602" target="_blank">View chess.com profile →</a>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🎵</div>
+      <div>
+        <h4>Music</h4>
+        <p>Play guitar, piano, and trumpet. Music has been a long-standing creative outlet alongside the sciences.</p>
+      </div>
+    </div>
+
+    <div class="act-item">
+      <div class="act-icon">🎭</div>
+      <div>
+        <h4>Cosplay &amp; Art</h4>
+        <p>Creative pursuits including cosplay and visual art — a different kind of building that channels the same attention to detail as lab work.</p>
+      </div>
+    </div>
+
+  </div><!-- /.act-grid -->
+
+  <div class="page-footer">
+    <span>Nathan Chan · Seattle, WA</span>
+    <span><a href="index.html">← Back to canvas</a> · <a href="https://www.linkedin.com/in/nathanchan1234/" target="_blank">LinkedIn</a></span>
+  </div>
+
+</main>
+
+</body>
+</html>
