@@ -149,14 +149,16 @@
       border-radius: var(--r-md);
       text-decoration: none;
       color: var(--ink);
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      /* transform intentionally omitted — GSAP owns it (float + press) */
+      transition: border-color 0.2s, box-shadow 0.18s;
+      box-shadow: 0 5px 0 rgba(180, 200, 220, 0.65);
       user-select: none;
       cursor: none;
     }
     .orbit-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 4px 20px rgba(26, 109, 181, 0.12);
-      transform: translateY(-2px);
+      /* bottom edge shrinks, blue glow appears — press feel via shadow alone */
+      box-shadow: 0 1px 0 rgba(26, 109, 181, 0.25), 0 6px 24px rgba(26, 109, 181, 0.1);
     }
     .orbit-card .card-label {
       font-family: 'DM Sans', sans-serif;
@@ -628,39 +630,89 @@
     }
 
     /* ─────────────────────────────────────────
+       LIVE CANVAS — float + press hover
+       Called once entrance animation completes.
+    ───────────────────────────────────────── */
+    function startLiveCanvas() {
+      const floatCards  = gsap.utils.toArray('.orbit-card');
+      const floatDurs   = [3.2, 3.7, 3.4, 3.0, 3.9];
+      const floatTweens = [];
+
+      floatCards.forEach((card, i) => {
+        // Gentle oscillation — each card on its own cadence
+        const ft = gsap.to(card, {
+          y: 5, duration: floatDurs[i], ease: 'sine.inOut',
+          repeat: -1, yoyo: true, delay: i * 0.55
+        });
+        floatTweens.push(ft);
+
+        // 3D press: pause float, press down, release + restart float
+        card.addEventListener('mouseenter', () => {
+          ft.pause();
+          gsap.to(card, { y: 6, scale: 0.97, duration: 0.14, ease: 'power2.in', overwrite: true });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            y: 0, scale: 1, duration: 0.3, ease: 'power2.out', overwrite: true,
+            onComplete: () => ft.restart()
+          });
+        });
+      });
+
+      // Center node: very subtle float (no hover interaction)
+      gsap.to('#center-node', {
+        y: 4, duration: 4.2, ease: 'sine.inOut', repeat: -1, yoyo: true
+      });
+    }
+
+    /* ─────────────────────────────────────────
        ENTRANCE ANIMATION
        Start zoomed in on photo, pull back to reveal
        the full canvas. Cards appear as they come
        into frame — as if they were always there.
     ───────────────────────────────────────── */
-    gsap.set('#center-node',    { scale: 3, transformOrigin: '130px 130px' });
-    gsap.set('.circ-text-wrap', { opacity: 0 });
-    gsap.set('#tagline',        { opacity: 0 });
-    gsap.set('#about-node',     { opacity: 0 });
-    gsap.set('.orbit-card',     { opacity: 0 });
-    gsap.set(['#drag-hint', '#linkedin-link', '#email-link'], { opacity: 0 });
+    const isReturn = new URLSearchParams(window.location.search).get('return');
 
-    gsap.timeline({ delay: 0.15 })
-      // Pull back from photo to full canvas view
-      .to('#center-node', {
-        scale: 1, duration: 1.1, ease: 'power2.inOut'
-      }, 0)
-      // Circular text ring fades in during pullback
-      .to('.circ-text-wrap', {
-        opacity: 1, duration: 0.5
-      }, 0.3)
-      // Tagline + about emerge as scale approaches 1
-      .to(['#tagline', '#about-node'], {
-        opacity: 1, duration: 0.45, ease: 'power2.out'
-      }, 0.65)
-      // Cards fade in near the end — coming into frame
-      .to('.orbit-card', {
-        opacity: 1, duration: 0.4, stagger: 0.07
-      }, 0.85)
-      // Chrome last
-      .to(['#drag-hint', '#linkedin-link', '#email-link'], {
-        opacity: 1, duration: 0.4
-      }, 1.1);
+    if (isReturn) {
+      // Came back via return arrow — skip entrance, just fade in and go live
+      document.body.style.opacity = '0';
+      gsap.to(document.body, { opacity: 1, duration: 0.4, ease: 'power2.out',
+        onComplete: startLiveCanvas });
+    } else {
+      // Fresh visit — full entrance animation
+      gsap.set('#center-node',    { scale: 3, transformOrigin: '130px 130px' });
+      gsap.set('.circ-text-wrap', { opacity: 0 });
+      gsap.set('#tagline',        { opacity: 0 });
+      gsap.set('#about-node',     { opacity: 0 });
+      gsap.set('.orbit-card',     { opacity: 0, y: 8, scale: 0.97, boxShadow: '0 1px 0 rgba(180,200,220,0.3)' });
+      gsap.set(['#drag-hint', '#linkedin-link', '#email-link'], { opacity: 0 });
+
+      gsap.timeline({ delay: 0.15, onComplete: startLiveCanvas })
+        // Pull back from photo to full canvas view
+        .to('#center-node', {
+          scale: 1, duration: 1.6, ease: 'power2.inOut'
+        }, 0)
+        // Circular text ring fades in during pullback
+        .to('.circ-text-wrap', {
+          opacity: 1, duration: 0.6
+        }, 0.5)
+        // Tagline + about emerge as scale approaches 1
+        .to(['#tagline', '#about-node'], {
+          opacity: 1, duration: 0.5, ease: 'power2.out'
+        }, 1.05)
+        // Cards appear depressed then spring up — click into existence
+        .to('.orbit-card', {
+          keyframes: [
+            { opacity: 1, duration: 0.25 },
+            { y: 0, scale: 1, boxShadow: '0 5px 0 rgba(180,200,220,0.65)', duration: 0.55, ease: 'back.out(1.8)' }
+          ],
+          stagger: 0.14
+        }, 1.3)
+        // Chrome last
+        .to(['#drag-hint', '#linkedin-link', '#email-link'], {
+          opacity: 1, duration: 0.4
+        }, 1.7);
+    }
 
     // Auto-dismiss drag hint after 4 s
     setTimeout(() => { if (!hasDragged) dismissHint(); }, 4000);
