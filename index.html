@@ -240,6 +240,120 @@
       flex-shrink: 0;
     }
 
+    /* ── DRAW CANVAS ── */
+    #draw-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    /* ── WORLD DRAW TOOLS ── */
+    .draw-tool {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: none;
+      user-select: none;
+    }
+    .draw-tool svg {
+      filter: drop-shadow(0 2px 6px rgba(15,30,46,0.2));
+      transition: transform 0.2s;
+    }
+    .draw-tool:hover svg { transform: scale(1.14) rotate(-8deg) !important; }
+    .draw-tool-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+      opacity: 0.7;
+    }
+
+    /* ── DRAW CURSOR FOLLOWER ── */
+    #draw-cursor {
+      position: fixed;
+      z-index: 995;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* ── DRAW MODE LABEL ── */
+    #draw-mode-label {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: none;
+      align-items: center;
+      gap: 0.45rem;
+      pointer-events: none;
+      z-index: 150;
+      white-space: nowrap;
+    }
+
+    /* ── CLEAR ALL BUTTON ── */
+    #clear-all-btn {
+      position: fixed;
+      top: 1.4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      display: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      background: rgba(240,244,248,0.92);
+      backdrop-filter: blur(8px);
+      padding: 0.35rem 0.9rem;
+      cursor: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    #clear-all-btn:hover { color: #b03030; border-color: rgba(176,48,48,0.5); }
+
+    /* ── GRAFFITI WARNING + ERASER HINT — shared card style ── */
+    #graffiti-warn, #eraser-hint {
+      position: fixed;
+      z-index: 400;
+      display: none;
+      pointer-events: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+      color: var(--ink);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 0.6rem 1.2rem;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(15,30,46,0.12);
+    }
+    #graffiti-warn {
+      top: 43%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #eraser-hint {
+      top: 110px;
+      right: 80px;
+    }
+
     /* ── EMAIL PILL ── */
     #email-link {
       position: fixed;
@@ -282,6 +396,9 @@
 
   <!-- DOT GRID BACKGROUND -->
   <div class="canvas-bg"></div>
+
+  <!-- DRAW CANVAS OVERLAY -->
+  <canvas id="draw-canvas"></canvas>
 
   <!-- CUSTOM CURSOR -->
   <div id="cur-dot"></div>
@@ -428,7 +545,74 @@
       <div class="card-sub">Photos & work</div>
     </a>
 
+    <!-- ── DRAW TOOLS — hidden at canvas edges, found by exploring ──
+         Pick up by clicking. Draw freely. Press ESC to put down.
+         Pencil: far left · Marker: far right · Eraser: far bottom
+    ── -->
+
+    <!-- Pencil · far left, off screen — found by panning right -->
+    <div class="draw-tool" data-tool="pencil"
+         style="left:-920px; top:-68px; transform:rotate(-20deg);"
+         onclick="handleToolClick(this)" onmousedown="event.stopPropagation()">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+           stroke="#0f1e2e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+      </svg>
+      <span class="draw-tool-label">pencil</span>
+    </div>
+
+    <!-- Red marker · bottom-right, off screen — found by panning left + down -->
+    <div class="draw-tool" data-tool="marker"
+         style="left:662px; top:522px; transform:rotate(15deg);"
+         onclick="handleToolClick(this)" onmousedown="event.stopPropagation()">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+           stroke="#c82020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+              fill="rgba(200,32,32,0.1)"/>
+      </svg>
+      <span class="draw-tool-label">marker</span>
+    </div>
+
+    <!-- Eraser · upper-right, visible on load — teases the draw system -->
+    <div class="draw-tool" data-tool="eraser"
+         style="left:472px; top:-398px; transform:rotate(5deg);"
+         onclick="handleToolClick(this)" onmousedown="event.stopPropagation()">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+           stroke="#5a6e82" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 20H7L3 16l11-11 8 8-2 7z" fill="rgba(90,110,130,0.08)"/>
+        <path d="M6 11l7 7"/>
+      </svg>
+      <span class="draw-tool-label">eraser</span>
+    </div>
+
   </div><!-- /#world -->
+
+  <!-- DRAW CURSOR FOLLOWER (appears when tool is held) -->
+  <div id="draw-cursor"></div>
+
+  <!-- DRAW MODE INDICATOR -->
+  <div id="draw-mode-label">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="13"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>drawing · esc to put down</span>
+  </div>
+
+  <!-- CLEAR ALL (appears after first stroke) -->
+  <button id="clear-all-btn" onclick="clearAllDrawing()">clear all</button>
+
+  <!-- GRAFFITI WARNING -->
+  <div id="graffiti-warn">No Graffiti!</div>
+
+  <!-- ERASER HINT (shown when eraser clicked before any drawing tools found) -->
+  <div id="eraser-hint">
+    A scabbard without its sword...<br>
+    <span style="opacity:0.65; font-size:0.72rem;">Explore to find more!</span>
+  </div>
 
   <!-- GSAP 3 from cdnjs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -504,6 +688,7 @@
     cards.forEach(c => {
       c.addEventListener('click', function(e) {
         e.preventDefault();
+        if (activeTool) return;
         const href    = this.getAttribute('href');
         const openNew = this.getAttribute('target') === '_blank';
 
@@ -535,10 +720,11 @@
     });
 
     // Pan limits — world units. Keeps at least one card visible at all times.
-    const PAN_LIMIT_X = 550;
-    const PAN_LIMIT_Y = 500;
+    const PAN_LIMIT_X = 750;
+    const PAN_LIMIT_Y = 650;
 
     document.addEventListener('mousedown', e => {
+      if (activeTool) return;
       dragging = true;
       startX   = e.clientX - worldX;
       startY   = e.clientY - worldY;
@@ -685,6 +871,7 @@
       gsap.set('#tagline',        { opacity: 0 });
       gsap.set('#about-node',     { opacity: 0 });
       gsap.set('.orbit-card',     { opacity: 0, y: 8, scale: 0.97, boxShadow: '0 1px 0 rgba(180,200,220,0.3)' });
+      gsap.set('.draw-tool[data-tool="eraser"]', { opacity: 0, scale: 0.7, rotation: 5 });
       gsap.set(['#drag-hint', '#linkedin-link', '#email-link'], { opacity: 0 });
 
       gsap.timeline({ delay: 0.15, onComplete: startLiveCanvas })
@@ -708,14 +895,18 @@
           ],
           stagger: 0.14
         }, 1.3)
+        // Eraser appears after cards settle
+        .to('.draw-tool[data-tool="eraser"]', {
+          opacity: 1, scale: 1, rotation: 5, duration: 0.5, ease: 'back.out(1.8)'
+        }, 2.0)
         // Chrome last
         .to(['#drag-hint', '#linkedin-link', '#email-link'], {
           opacity: 1, duration: 0.4
         }, 1.7);
     }
 
-    // Auto-dismiss drag hint after 4 s
-    setTimeout(() => { if (!hasDragged) dismissHint(); }, 4000);
+    // Auto-dismiss drag hint after ~7 s from load (~5 s of visible time, hint appears at ~1.85 s)
+    setTimeout(() => { if (!hasDragged) dismissHint(); }, 7000);
 
     // Back button: bfcache restores exact JS state including off-screen worldX/Y.
     // Snap canvas back to origin so user isn't lost.
@@ -739,6 +930,290 @@
         });
       }
     });
+
+    /* ─────────────────────────────────────────
+       DRAW SYSTEM
+       Tools are world-space objects found by exploring.
+       Click to pick up, draw freely, ESC to put down.
+       Strokes stored in world coordinates — pan/zoom aware.
+    ───────────────────────────────────────── */
+
+    // ── State ──
+    let activeTool       = null;  // 'pencil' | 'marker' | 'eraser' | null
+    let isDrawing        = false;
+    const strokes        = [];    // committed: { tool, points:[{x,y}] }
+    let liveStroke       = null;  // in-progress stroke, not yet committed
+    let graffitiCooldown = false;
+
+    // ── Elements ──
+    const drawCanvas = document.getElementById('draw-canvas');
+    const dctx       = drawCanvas.getContext('2d');
+    const drawCursor = document.getElementById('draw-cursor');
+    const drawLabel  = document.getElementById('draw-mode-label');
+    const clearBtn   = document.getElementById('clear-all-btn');
+    const grafWarn   = document.getElementById('graffiti-warn');
+
+    // ── Canvas resize ──
+    function resizeDrawCanvas() {
+      drawCanvas.width  = window.innerWidth;
+      drawCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeDrawCanvas);
+    resizeDrawCanvas();
+
+    // ── Coordinate helpers ──
+    // Screen → world: inverse of #world's translate(vcx+worldX, vcy+worldY) scale(scale)
+    function vcx() { return window.innerWidth  / 2; }
+    function vcy() { return window.innerHeight / 2; }
+    function s2w(sx, sy) {
+      return {
+        x: (sx - vcx() - worldX) / scale,
+        y: (sy - vcy() - worldY) / scale
+      };
+    }
+
+    // ── Protected zones (world space) ──
+    // Profile circle: center (0, -80), radius 100
+    // About card: rect x[-150,150] y[95,220]
+    function isProtected(wx, wy) {
+      const dx = wx, dy = wy + 80;
+      if (dx * dx + dy * dy < 100 * 100) return true;
+      if (wx >= -150 && wx <= 150 && wy >= 95 && wy <= 220) return true;
+      return false;
+    }
+
+    function flashGraffitiWarn() {
+      if (graffitiCooldown) return;
+      graffitiCooldown = true;
+      grafWarn.style.display = 'block';
+      gsap.fromTo(grafWarn, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.25 });
+      setTimeout(() => {
+        gsap.to(grafWarn, {
+          opacity: 0, duration: 0.35,
+          onComplete: () => { grafWarn.style.display = 'none'; graffitiCooldown = false; }
+        });
+      }, 1700);
+    }
+
+    // ── Tool visual config ──
+    const TOOL_CFG = {
+      pencil: { lw: 1.5,  color: '#0f1e2e',                 op: 'source-over',  alpha: 0.88 },
+      marker: { lw: 7,    color: '#c82020',                  op: 'source-over',  alpha: 0.45 },
+      eraser: { lw: 22,   color: 'rgba(0,0,0,1)',            op: 'destination-out', alpha: 1  }
+    };
+
+    // Cursor follower SVG + tip offset [offX, offY from top-left of div to drawing tip]
+    const TOOL_CURSORS = {
+      pencil: {
+        svg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0f1e2e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.25))"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+        ox: -3, oy: -23   // tip of pencil to cursor dot
+      },
+      marker: {
+        svg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#c82020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.25))"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="rgba(200,32,32,0.1)"/></svg>`,
+        ox: -3, oy: -23
+      },
+      eraser: {
+        svg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5a6e82" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.25))"><path d="M20 20H7L3 16l11-11 8 8-2 7z" fill="rgba(90,110,130,0.12)"/><path d="M6 11l7 7"/></svg>`,
+        ox: -13, oy: -13  // center of eraser
+      }
+    };
+
+    // ── Render all strokes ──
+    function renderAll() {
+      dctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      const all = liveStroke ? [...strokes, liveStroke] : strokes;
+      if (all.length === 0) return;
+
+      dctx.save();
+      dctx.translate(vcx() + worldX, vcy() + worldY);
+      dctx.scale(scale, scale);
+
+      for (const s of all) {
+        if (s.points.length < 2) continue;
+        const cfg = TOOL_CFG[s.tool];
+        dctx.save();
+        dctx.globalCompositeOperation = cfg.op;
+        dctx.globalAlpha  = cfg.alpha;
+        dctx.strokeStyle  = cfg.color;
+        dctx.lineWidth    = cfg.lw / scale; // keep screen-space line width consistent
+        dctx.lineCap      = 'round';
+        dctx.lineJoin     = 'round';
+        dctx.beginPath();
+        dctx.moveTo(s.points[0].x, s.points[0].y);
+        for (let i = 1; i < s.points.length; i++) {
+          dctx.lineTo(s.points[i].x, s.points[i].y);
+        }
+        dctx.stroke();
+        dctx.restore();
+      }
+
+      dctx.restore();
+    }
+
+    // RAF loop — re-renders whenever pan/zoom changes worldX/worldY/scale
+    (function renderLoop() {
+      if (strokes.length > 0 || liveStroke) renderAll();
+      requestAnimationFrame(renderLoop);
+    })();
+
+    // ── Eraser hint — shown when eraser is clicked before any drawing exists ──
+    const eraserHintEl = document.getElementById('eraser-hint');
+    let eraserHintCooldown = false;
+
+    function flashEraserHint() {
+      if (eraserHintCooldown) return;
+      eraserHintCooldown = true;
+      eraserHintEl.style.display = 'block';
+      gsap.fromTo(eraserHintEl, { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.3 });
+      setTimeout(() => {
+        gsap.to(eraserHintEl, {
+          opacity: 0, duration: 0.4,
+          onComplete: () => { eraserHintEl.style.display = 'none'; eraserHintCooldown = false; }
+        });
+      }, 2200);
+    }
+
+    // ── Pick up a tool ──
+    window.handleToolClick = function(el) {
+      if (activeTool) return; // already holding one
+      const tool = el.dataset.tool;
+
+      // Eraser clicked before any drawing exists — show hint, but still pick up
+      if (tool === 'eraser' && strokes.length === 0) {
+        flashEraserHint();
+      }
+      activeTool = tool;
+
+      // Fade tool node out of world
+      gsap.to(el, { opacity: 0, scale: 0.7, duration: 0.2, onComplete: () => {
+        el.style.pointerEvents = 'none';
+      }});
+
+      // Activate cursor follower
+      const cfg = TOOL_CURSORS[tool];
+      drawCursor.innerHTML = cfg.svg;
+      drawCursor.style.display = 'block';
+
+      // Enable draw canvas for pointer events
+      drawCanvas.style.pointerEvents = 'auto';
+
+      // Hide cursor ring while holding tool
+      ring.style.display = 'none';
+
+      // Show mode label
+      drawLabel.style.display = 'flex';
+      gsap.fromTo(drawLabel, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    };
+
+    // ── Deposit tool at current cursor position ──
+    function depositTool() {
+      if (!activeTool) return;
+      const tool = activeTool;
+      activeTool = null;
+      isDrawing  = false;
+
+      // Commit any in-progress stroke
+      if (liveStroke && liveStroke.points.length >= 2) {
+        strokes.push(liveStroke);
+        syncClearBtn();
+      }
+      liveStroke = null;
+
+      // Move tool element to dropped world position
+      const el = document.querySelector(`.draw-tool[data-tool="${tool}"]`);
+      const wp = s2w(mx, my);
+      el.style.left = (wp.x - 18) + 'px';
+      el.style.top  = (wp.y - 18) + 'px';
+      el.style.pointerEvents = 'auto';
+      gsap.fromTo(el,
+        { opacity: 0, scale: 0.7 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.6)' }
+      );
+
+      // Reset tool's idle tilt (was potentially changed by hover)
+      // (CSS transform is restored when GSAP finishes with scale:1 — no conflict)
+
+      // Hide cursor follower
+      drawCursor.style.display = 'none';
+      drawCursor.innerHTML = '';
+
+      // Restore cursor ring
+      ring.style.display = 'block';
+
+      // Disable canvas pointer events
+      drawCanvas.style.pointerEvents = 'none';
+
+      // Hide mode label
+      gsap.to(drawLabel, {
+        opacity: 0, duration: 0.2,
+        onComplete: () => { drawLabel.style.display = 'none'; }
+      });
+    }
+
+    // ── Cursor follower tracks mouse (document-level, always) ──
+    document.addEventListener('mousemove', e => {
+      if (!activeTool) return;
+      const cfg = TOOL_CURSORS[activeTool];
+      drawCursor.style.left = (e.clientX + cfg.ox) + 'px';
+      drawCursor.style.top  = (e.clientY + cfg.oy) + 'px';
+    });
+
+    // ── Drawing events (on draw canvas) ──
+    drawCanvas.addEventListener('mousedown', e => {
+      if (!activeTool) return;
+      const wp = s2w(e.clientX, e.clientY);
+      if (isProtected(wp.x, wp.y)) { flashGraffitiWarn(); return; }
+      isDrawing  = true;
+      liveStroke = { tool: activeTool, points: [wp] };
+    });
+
+    drawCanvas.addEventListener('mousemove', e => {
+      if (!isDrawing || !liveStroke) return;
+      const wp = s2w(e.clientX, e.clientY);
+      if (isProtected(wp.x, wp.y)) { flashGraffitiWarn(); return; }
+      liveStroke.points.push(wp);
+    });
+
+    drawCanvas.addEventListener('mouseup', () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      if (liveStroke && liveStroke.points.length >= 2) {
+        strokes.push(liveStroke);
+        syncClearBtn();
+      }
+      liveStroke = null;
+    });
+
+    // ESC — deposit tool at current cursor position
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && activeTool) depositTool();
+    });
+
+    // Right-click — also deposits
+    drawCanvas.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (activeTool) depositTool();
+    });
+
+    // ── Clear all drawings ──
+    function syncClearBtn() {
+      if (strokes.length > 0) {
+        clearBtn.style.display = 'block';
+        gsap.fromTo(clearBtn, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+      } else {
+        gsap.to(clearBtn, {
+          opacity: 0, duration: 0.2,
+          onComplete: () => { clearBtn.style.display = 'none'; }
+        });
+      }
+    }
+
+    window.clearAllDrawing = function() {
+      strokes.length = 0;
+      liveStroke = null;
+      dctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      syncClearBtn();
+    };
 
   })();
   </script>
