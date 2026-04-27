@@ -51,41 +51,32 @@
   }
   .view-only-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* NAV */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 1.2rem 4rem;
-    background: rgba(240,244,248,0.93); backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--line); z-index: 100;
+  /* LOCK TOGGLE (fixed, top-right) */
+  .lock-toggle-btn {
+    position: fixed; top: 1.2rem; right: 1.5rem; z-index: 200;
+    font-size: 0.75rem; color: var(--muted); background: rgba(240,244,248,0.92);
+    border: 1px solid var(--line); padding: 0.3rem 0.7rem; border-radius: 4px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    backdrop-filter: blur(6px); transition: all 0.2s; white-space: nowrap;
   }
-  .nav-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); text-decoration: none; }
-  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
-  .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; transition: color 0.2s; }
-  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-  .nav-lock-btn {
-    font-size: 0.78rem; color: var(--muted); background: none; border: 1px solid var(--line);
-    padding: 0.3rem 0.7rem; border-radius: 4px; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
-  }
-  .nav-lock-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .lock-toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
 
   /* PAGE LAYOUT */
   #page-wrap {
-    padding-top: 5.5rem;
+    padding-top: 1.5rem;
     min-height: 100vh;
   }
 
   /* SIDEBAR */
   #project-sidebar {
     position: fixed;
-    left: 0;
-    top: 5.5rem;
+    right: 0;
+    top: 0;
     width: 180px;
-    height: calc(100vh - 5.5rem);
+    height: 100vh;
     background: var(--card);
-    border-right: 1px solid var(--line);
-    padding: 1.75rem 0 1rem;
+    border-left: 1px solid var(--line);
+    padding: 4rem 0 1rem;
     overflow-y: auto;
     z-index: 50;
   }
@@ -96,12 +87,12 @@
   .project-tile {
     display: flex; align-items: center; gap: 0.75rem;
     padding: 0.85rem 1.25rem;
-    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
     cursor: pointer; transition: background 0.15s, border-color 0.15s;
     user-select: none;
   }
   .project-tile:hover { background: var(--bg); }
-  .project-tile.active { border-left-color: var(--accent); background: var(--bg); }
+  .project-tile.active { border-right-color: var(--accent); background: var(--bg); }
   .project-tile.active .tile-name { color: var(--accent); }
   .tile-icon {
     width: 36px; height: 36px; border-radius: 8px;
@@ -114,8 +105,8 @@
 
   /* MAIN CONTENT */
   main {
-    margin-left: calc(180px + max(0px, (100vw - 180px - 720px) / 2));
-    margin-right: auto;
+    margin-left: max(0px, (100vw - 180px - 720px) / 2);
+    margin-right: 180px;
     padding: 2rem 2.5rem 4rem;
     max-width: 720px;
   }
@@ -233,16 +224,14 @@
 
   /* RESPONSIVE */
   @media (max-width: 900px) {
-    nav { padding: 1rem 1.5rem; }
-    .nav-links { gap: 0.6rem; }
-    #page-wrap { padding-top: 4.5rem; }
+    #page-wrap { padding-top: 1rem; }
     #project-sidebar {
       position: static; width: 100%; height: auto;
-      border-right: none; border-bottom: 1px solid var(--line);
+      border-left: none; border-bottom: 1px solid var(--line);
       display: flex; flex-direction: row; padding: 0.75rem 1rem;
       overflow-x: auto; gap: 0;
     }
-    main { margin-left: 0; }
+    main { margin-left: 0; margin-right: 0; }
     .sidebar-label { display: none; }
     .project-tile {
       border-left: none; border-bottom: 3px solid transparent;
@@ -276,18 +265,17 @@
   </div>
 </div>
 
-<!-- NAV -->
-<nav>
-  <a class="nav-name" href="index.html">Nathan Chan</a>
-  <ul class="nav-links">
-    <li><a href="download/nathan-chan-resume.pdf" target="_blank">Resume</a></li>
-    <li><a href="activities.html">Activities</a></li>
-    <li><a href="devblog.html" class="active">Dev Blog</a></li>
-    <li><a href="climbing.html">Climbing</a></li>
-    <li><a href="gallery.html">Gallery</a></li>
-    <li><button class="nav-lock-btn" id="navLockBtn" onclick="navLockAction()">🔓 Unlock</button></li>
-  </ul>
-</nav>
+<!-- RETURN TO CANVAS — Dev Blog is lower-right from center, so home is upper-left (225°) -->
+<div class="canvas-return" style="top:1.5rem;left:1.5rem;" onclick="returnHome()">
+  <svg width="56" height="16" viewBox="0 0 56 16" style="transform:rotate(225deg)">
+    <line x1="2" y1="8" x2="44" y2="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round"/>
+    <polyline points="38,3 46,8 38,13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span>return</span>
+</div>
+
+<!-- LOCK TOGGLE (floating, top-right) -->
+<button class="lock-toggle-btn" id="navLockBtn" onclick="navLockAction()">🔓 Unlock</button>
 
 <div id="page-wrap">
 
@@ -659,6 +647,12 @@
 
   // ── INIT ──────────────────────────────────────────────────
   loadPosts();
+
+  window.returnHome = function() {
+    document.body.style.transition = 'opacity 0.4s ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 420);
+  };
 </script>
 </body>
 </html>

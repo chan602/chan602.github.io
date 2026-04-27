@@ -67,40 +67,24 @@ body.canvas-page main {
   from { opacity: 0; transform: translateY(14px); }
 }
 
-/* ── BACK-TO-HOME NAV (sub-pages) ── */
-.back-home {
+/* ── CANVAS RETURN INDICATOR (sub-pages) ── */
+/* Directional arrow pointing toward canvas home. Angle + position set per-page inline. */
+.canvas-return {
   position: fixed;
-  top: 1.25rem;
-  left: 1.25rem;
   z-index: 200;
-  display: inline-flex;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.45rem;
-  text-decoration: none;
+  gap: 6px;
   color: var(--muted);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.4rem 0.8rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: rgba(240, 244, 248, 0.92);
-  backdrop-filter: blur(6px);
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s;
+  user-select: none;
 }
-.back-home:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-.back-home svg {
-  width: 13px;
-  height: 13px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  flex-shrink: 0;
-}
+.canvas-return:hover { color: var(--accent); }
+.canvas-return svg { overflow: visible; display: block; }
