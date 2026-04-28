@@ -833,13 +833,23 @@
         floatTweens.push(ft);
 
         // 3D press: pause float, press down, release + restart float
+        // boxShadow is included here because GSAP owns it as an inline style after the
+        // entrance animation — CSS :hover can't override inline styles, so we must
+        // animate it explicitly. On return=1 (no entrance), GSAP reads the computed
+        // CSS value and animates from there — identical result either way.
         card.addEventListener('mouseenter', () => {
           ft.pause();
-          gsap.to(card, { y: 6, scale: 0.97, duration: 0.14, ease: 'power2.in', overwrite: true });
+          gsap.to(card, {
+            y: 6, scale: 0.97,
+            boxShadow: '0 1px 0 rgba(26,109,181,0.25)',
+            duration: 0.14, ease: 'power2.in', overwrite: true
+          });
         });
         card.addEventListener('mouseleave', () => {
           gsap.to(card, {
-            y: 0, scale: 1, duration: 0.3, ease: 'power2.out', overwrite: true,
+            y: 0, scale: 1,
+            boxShadow: '0 5px 0 rgba(180,200,220,0.65)',
+            duration: 0.3, ease: 'power2.out', overwrite: true,
             onComplete: () => ft.restart()
           });
         });
