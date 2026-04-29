@@ -184,6 +184,52 @@
       line-height: 1.4;
     }
 
+    /* ── RESUME EXPAND ── */
+    /* Pills are a standalone sibling of the orbit card in #world.
+       translateY(-100% - gap) self-anchors them directly above the card.
+       Visibility is JS-controlled (mouseenter/mouseleave with 120ms delay). */
+    .resume-pills {
+      position: absolute;
+      width: 160px; /* matches card width so justify-content:center aligns correctly */
+      transform: translateY(calc(-100% - 0.55rem));
+      display: flex;
+      justify-content: center;
+      gap: 1.4rem;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .resume-pill {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--card);
+      box-shadow: 0 3px 0 rgba(180,200,220,0.55);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      text-decoration: none;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.52rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      text-align: center;
+      cursor: none;
+      transition: border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+    .resume-pill svg {
+      flex-shrink: 0;
+    }
+    .resume-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 1px 0 rgba(26,109,181,0.2), 0 4px 16px rgba(26,109,181,0.1);
+      transform: translateY(-2px);
+    }
+
     /* ── DRAG HINT ── */
     #drag-hint {
       position: fixed;
@@ -506,6 +552,27 @@
     ── -->
 
     <!-- Resume · 12 o'clock -->
+    <!-- Pills: same left/top as the card. translateY(-100% - gap) pulls them above. -->
+    <div class="resume-pills" style="left:-80px; top:-405px;">
+      <a class="resume-pill" href="download/nathan-chan-resume.pdf" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Resume
+      </a>
+      <a class="resume-pill" href="download/nathan-chan-transcript.pdf" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Transcript
+      </a>
+    </div>
     <a class="orbit-card" href="download/nathan-chan-resume.pdf" target="_blank"
        style="left:-80px; top:-405px;">
       <div class="card-label">Document</div>
@@ -647,7 +714,7 @@
     })();
 
     // Expand ring on interactive elements
-    const hoverTargets = document.querySelectorAll('.orbit-card, #linkedin-link, #email-link');
+    const hoverTargets = document.querySelectorAll('.orbit-card, .resume-pill, #linkedin-link, #email-link');
     hoverTargets.forEach(el => {
       el.addEventListener('mouseenter', () => {
         ring.classList.remove('resting');
@@ -678,6 +745,38 @@
       c.addEventListener('mousedown', e => e.stopPropagation());
       c.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
     });
+
+    // Pills: prevent mousedown bubbling to the pan handler
+    document.querySelectorAll('.resume-pill').forEach(p => {
+      p.addEventListener('mousedown', e => e.stopPropagation());
+      p.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+    });
+
+    // Pills hover — JS-controlled so the hover zone works even though pills are
+    // a separate sibling element (not inside a shared wrapper with the card).
+    // 120ms hide delay lets the mouse cross the 0.55rem gap without dismissing.
+    const resumePillsEl = document.querySelector('.resume-pills');
+    const resumeCardEl  = document.querySelector('.orbit-card[href*="resume"]');
+    let pillsHideTimer  = null;
+
+    function showPills() {
+      clearTimeout(pillsHideTimer);
+      resumePillsEl.style.pointerEvents = 'auto';
+      gsap.to(resumePillsEl, { opacity: 1, duration: 0.18, overwrite: true });
+    }
+    function schedulePillsHide() {
+      clearTimeout(pillsHideTimer);
+      pillsHideTimer = setTimeout(() => {
+        gsap.to(resumePillsEl, { opacity: 0, duration: 0.18, overwrite: true,
+          onComplete: () => { resumePillsEl.style.pointerEvents = 'none'; }
+        });
+      }, 120);
+    }
+
+    resumeCardEl.addEventListener('mouseenter', showPills);
+    resumeCardEl.addEventListener('mouseleave', schedulePillsHide);
+    resumePillsEl.addEventListener('mouseenter', showPills);
+    resumePillsEl.addEventListener('mouseleave', schedulePillsHide);
 
     /* ─────────────────────────────────────────
        CANVAS EXIT TRANSITION
@@ -716,6 +815,30 @@
             else window.location.href = href;
           }
         });
+      });
+    });
+
+    // Resume pill: trigger the same exit animation as clicking the card.
+    // Transcript pill is a plain link — no exit animation needed.
+    const resumePill = document.querySelector('.resume-pill[href*="resume"]');
+    resumePill.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (activeTool) return;
+      const href = this.getAttribute('href');
+      // Use the card's world-space position (same math as the card click handler)
+      const cx   = resumeCardEl.offsetLeft + resumeCardEl.offsetWidth  / 2;
+      const cy   = resumeCardEl.offsetTop  + resumeCardEl.offsetHeight / 2;
+      const dist = Math.sqrt(cx * cx + cy * cy);
+      const nx   = cx / dist;
+      const ny   = cy / dist;
+      const reach = Math.max(window.innerWidth, window.innerHeight) * 1.6;
+      const tx = worldX - nx * reach;
+      const ty = worldY - ny * reach;
+      worldX = tx;
+      worldY = ty;
+      gsap.to(world, {
+        x: tx, y: ty, duration: 0.48, ease: 'power2.in',
+        onComplete: () => { exitedToNewTab = true; window.open(href, '_blank'); }
       });
     });
 
@@ -820,6 +943,10 @@
        Called once entrance animation completes.
     ───────────────────────────────────────── */
     function startLiveCanvas() {
+      // Hand pill visibility back to CSS hover (removes inline opacity set during entrance).
+      // On return=1 this is a no-op — no inline style was set.
+      gsap.set('.resume-pills', { clearProps: 'opacity' });
+
       const floatCards  = gsap.utils.toArray('.orbit-card');
       const floatDurs   = [3.2, 3.7, 3.4, 3.0, 3.9];
       const floatTweens = [];
@@ -881,6 +1008,8 @@
       gsap.set('#tagline',        { opacity: 0 });
       gsap.set('#about-node',     { opacity: 0 });
       gsap.set('.orbit-card',     { opacity: 0, y: 8, scale: 0.97, boxShadow: '0 1px 0 rgba(180,200,220,0.3)' });
+      // Lock pills via inline style so CSS :hover can't reveal them during the entrance
+      gsap.set('.resume-pills',   { opacity: 0 });
       gsap.set('.draw-tool[data-tool="eraser"]', { opacity: 0, scale: 0.7, rotation: 5 });
       gsap.set(['#drag-hint', '#linkedin-link', '#email-link'], { opacity: 0 });
 
