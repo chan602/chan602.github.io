@@ -122,6 +122,42 @@
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes zoomIn { from { transform: scale(0.94); opacity: 0.6; } to { transform: scale(1); opacity: 1; } }
 
+  /* CAPSTONE ABSTRACT IMAGE */
+  .abstract-wrap {
+    margin-bottom: 1.6rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--card);
+    max-width: 780px;
+  }
+  .abstract-wrap img {
+    width: 100%;
+    display: block;
+  }
+
+  /* PAPER BUTTON */
+  .paper-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.55rem 1.2rem;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: rgba(26,109,181,0.05);
+    transition: background 0.18s, box-shadow 0.18s;
+    letter-spacing: 0.01em;
+  }
+  .paper-btn:hover {
+    background: rgba(26,109,181,0.1);
+    box-shadow: 0 2px 12px rgba(26,109,181,0.12);
+  }
+
   @media (max-width: 860px) {
     main { padding: 2.5rem 1.2rem 4rem; }
     .masonry { columns: 2; }
@@ -153,8 +189,49 @@
 
   <!-- JUMP NAV -->
   <div class="jump-nav">
+    <a class="jump-pill" href="#capstone">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M9 3h6"/><path d="M9 3v7L5 17a2 2 0 0 0 1.8 2.9h10.4A2 2 0 0 0 19 17l-4-7V3"/></svg>
+      Biochemistry Capstone
+    </a>
     <a class="jump-pill" href="#healthcare">🌍 Healthcare Outreach</a>
     <a class="jump-pill" href="#climbing">🧗 Climbing</a>
+  </div>
+
+  <!-- ─── BIOCHEMISTRY LAB CAPSTONE ───────────────────────── -->
+  <div class="act-section" id="capstone">
+    <p class="act-label">Biochemistry · Spring 2026</p>
+    <div class="act-header">
+      <span class="act-emoji">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink)"
+             stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3h6"/>
+          <path d="M9 3v7L5 17a2 2 0 0 0 1.8 2.9h10.4A2 2 0 0 0 19 17l-4-7V3"/>
+        </svg>
+      </span>
+      <h2 class="act-title">Biochemistry Lab Capstone</h2>
+    </div>
+    <p class="act-desc">
+      Investigated the effects of point mutations on the structure, stability, and enzymatic activity
+      of β-glucosidase B (BglB), a TIM-barrel enzyme involved in carbohydrate metabolism.
+      Generated mutant constructs via site-directed mutagenesis, expressed recombinant protein in
+      <em>E. coli</em>, and purified using Ni-NTA affinity chromatography. Characterized enzymatic
+      function using pNPG spectrophotometric assays, SDS-PAGE, and thermal stability analysis.
+      Compared wild-type and W123Y mutant variants to assess how a single amino acid substitution
+      alters protein stability and catalytic activity.
+    </p>
+    <div class="act-rule"></div>
+
+    <p style="font-family:'Playfair Display',serif; font-size:1rem; color:var(--ink); margin-bottom:0.6rem;">W123Y BglB Analysis Graphical Abstract</p>
+    <div class="abstract-wrap">
+      <img src="download/W123Y%20BglB%20Analysis%20Abstract.png"
+           alt="W123Y BglB Variant, Graphical Abstract" loading="lazy"/>
+    </div>
+
+    <a class="paper-btn"
+       href="download/Design%2C%20Expression%2C%20and%20Functional%20Analysis%20of%20the%20W123Y%20BglB%20Variant%20via%20Site-Directed%20Mutagenesis%2C%20Protein%20Expression%2C%20Structural%20Modeling%2C%20and%20Enzymatic%20Kinetics.pdf"
+       target="_blank" rel="noopener">
+      Read my paper &rarr;
+    </a>
   </div>
 
   <!-- ─── HEALTHCARE OUTREACH ─────────────────────────────── -->
