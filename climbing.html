@@ -25,6 +25,9 @@
   .page-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.5rem; animation: fadeUp 0.7s 0.2s ease both; opacity: 0; }
   .page-title { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); margin-bottom: 0.5rem; line-height: 1.1; animation: fadeUp 0.7s 0.35s ease both; opacity: 0; }
   .page-sub { font-size: 0.95rem; color: var(--muted); font-weight: 300; margin-bottom: 2rem; max-width: 540px; animation: fadeUp 0.7s 0.5s ease both; opacity: 0; }
+  .act-link { display: inline-block; margin-top: 0.5rem; font-size: 0.78rem; color: var(--accent); text-decoration: none; font-weight: 500; transition: opacity 0.15s; }
+  .act-link:hover { opacity: 0.75; }
+  .act-links { display: flex; flex-direction: column; gap: 0.15rem; margin-top: 0.5rem; }
 
   /* INSTAGRAM LINK */
   .ig-link {
@@ -148,6 +151,7 @@
     <p class="page-label">Training · Performance · Progress</p>
     <h1 class="page-title">Climbing Log</h1>
     <p class="page-sub">Live training data pulled from my session log. Tracking volume, intensity, and weighted performance over time.</p>
+    <a class="act-link" href="gallery.html#climbing">View outdoor climbing gallery →</a>
   </div>
 
   <!-- INSTAGRAM -->
@@ -177,7 +181,7 @@
         <p class="section-label" style="margin-bottom:0.5rem">Background</p>
         <h2 style="font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:1rem;">Why I Started Tracking</h2>
         <p style="font-size:0.93rem; color:var(--muted); line-height:1.8; margin-bottom:1rem;">
-          Every pro climber and coach I've spoken with says the same thing: to get better at climbing, you just need to climb more. After a conversation with my friend Adam Beauchamp, I was inspired to push toward 20 hours per week — a real commitment that meant being far more deliberate and disciplined about my training. This log was born out of that conversation, and it's kept me motivated and accountable ever since.
+          Every pro climber and coach I've spoken to says the same thing: to get better at climbing, you just need to climb more. After a conversation with my friend Adam Beauchamp, I was inspired to push toward 20 hours per week — a real commitment that meant being far more deliberate and disciplined about my training. This log was born out of that conversation, and it's kept me motivated and accountable ever since.
         </p>
         <p style="font-size:0.93rem; color:var(--muted); line-height:1.8;">
           But tracking volume alone isn't enough. Raw hours don't capture quality, and simply counting sends by grade misses nuance — grades are non-linear, a V8 flash and a V8 project aren't the same effort, and what's available to send depends on what the gym has set that week. So I built a weighted scoring system: V8 = 1 point, V9 = 2, V10 = 4, V11 = 8, and so on (doubling with each grade). Dividing that weekly score by hours trained gives a <strong>Score/hr</strong> metric that normalizes performance by effort — a number that's hard to inflate and easy to track over time. As my dataset grows, I plan to move toward monthly score rates to better capture multi-week projects.
