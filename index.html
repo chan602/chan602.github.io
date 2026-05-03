@@ -181,7 +181,7 @@
     .resume-pills {
       position: absolute;
       left: -96px;
-      top: -500px;
+      top: -462px;
       width: 192px;
       display: flex;
       flex-direction: column;
@@ -532,7 +532,6 @@
 
     <!-- Resume download pills — positioned above the resume card, shown on hover -->
     <div class="resume-pills">
-      <a class="resume-pill" href="download/nathan-chan-resume.pdf" target="_blank">↓ Resume · PDF</a>
       <a class="resume-pill" href="download/nathan-chan-transcript.pdf" target="_blank">↓ Transcript · PDF</a>
     </div>
 
@@ -980,27 +979,6 @@
       });
     });
 
-    // Resume pill: same exit animation as clicking the card itself.
-    // Transcript pill is a plain new-tab link — no exit needed.
-    const resumePill = document.querySelector('.resume-pill[href*="resume"]');
-    resumePill.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (activeTool) return;
-      const href = this.getAttribute('href');
-      const cx   = resumeCardEl.offsetLeft + resumeCardEl.offsetWidth  / 2;
-      const cy   = resumeCardEl.offsetTop  + resumeCardEl.offsetHeight / 2;
-      const dist = Math.sqrt(cx * cx + cy * cy);
-      const nx   = cx / dist;
-      const ny   = cy / dist;
-      const reach = Math.max(window.innerWidth, window.innerHeight) * 1.6;
-      const tx = worldX - nx * reach;
-      const ty = worldY - ny * reach;
-      worldX = tx; worldY = ty;
-      gsap.to(world, {
-        x: tx, y: ty, duration: 0.48, ease: 'power2.in',
-        onComplete: () => { exitedToNewTab = true; window.open(href, '_blank'); }
-      });
-    });
 
     // Pan limits — world units. Keeps at least one card visible at all times.
     const PAN_LIMIT_X = 750;
