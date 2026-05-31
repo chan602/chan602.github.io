@@ -554,40 +554,24 @@
       const status = document.getElementById('load-status');
       status.textContent = 'Loading…';
 
-      // Google Sheets publish URL — ensure CSV output format
-      // Replace /edit or /pub?gid=... with /export?format=csv if needed
-      let fetchUrl = url;
-      if (url.includes('docs.google.com/spreadsheets')) {
-        // Handle both /pub and /edit URLs
-        if (url.includes('/pub?') || url.includes('/pub#')) {
-          fetchUrl = url.replace(/\/pub(\?.*)?$/, '/pub$1').replace('output=html', 'output=csv');
-          if (!fetchUrl.includes('output=csv')) fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + 'output=csv';
-        } else if (url.includes('/edit')) {
-          const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-          const gidMatch = url.match(/gid=(\d+)/);
-          if (match) {
-            fetchUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv${gidMatch ? '&gid=' + gidMatch[1] : ''}`;
-          }
-        }
-      }
-
-      Papa.parse(fetchUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          if (results.errors.length && !results.data.length) {
-            status.textContent = 'Error loading CSV. Check URL and sharing settings.';
+      fetch(url)
+        .then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(text => {
+          const results = Papa.parse(text, { header: true, skipEmptyLines: true });
+          if (!results.data.length) {
+            status.textContent = 'No data found. Check the sheet has rows and is published as CSV.';
             return;
           }
           allRows = parseRows(results.data);
           status.textContent = `${allRows.length} transactions loaded`;
           render();
-        },
-        error: () => {
-          status.textContent = 'Failed to fetch. Make sure the sheet is published as CSV and accessible.';
-        }
-      });
+        })
+        .catch(err => {
+          status.textContent = 'Failed to fetch (' + err.message + '). Make sure the sheet is published as CSV.';
+        });
     }
 
     // ── PARSE ROWS ─────────────────────────────────────────────
