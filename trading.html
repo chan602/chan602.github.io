@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trading — Nathan Chan</title>
+  <link rel="stylesheet" href="canvas-system.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── RETURN ARROW ── */
+    .return-arrow {
+      position: fixed;
+      top: 24px; left: 24px;
+      z-index: 100;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--line);
+      border-radius: 50%;
+      background: var(--card);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--muted);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .return-arrow:hover { border-color: var(--accent); color: var(--accent); }
+    .return-arrow svg { width: 16px; height: 16px; }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 32px 64px;
+    }
+
+    /* ── HEADER ── */
+    .page-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .page-sub {
+      margin-top: 6px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    /* ── CONFIG BANNER ── */
+    #config-banner {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #config-banner label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    #csv-url-input {
+      flex: 1;
+      min-width: 260px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      padding: 7px 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      color: var(--ink);
+      background: var(--bg);
+      outline: none;
+    }
+    #csv-url-input:focus { border-color: var(--accent); }
+    #load-btn {
+      padding: 7px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #load-btn:hover { background: #155a96; }
+    #load-status { font-size: 0.78rem; color: var(--muted); }
+
+    /* ── SUMMARY GRID ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .s-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 16px 18px;
+    }
+    .s-card .s-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .s-card .s-value {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .s-card .s-sub { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .s-card.pos .s-value { color: #2a7a4a; }
+    .s-card.neg .s-value { color: #b03030; }
+
+    /* ── PANELS ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 780px) { .two-col { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    /* ── EQUITY CURVE SVG ── */
+    #equity-svg {
+      width: 100%;
+      height: 180px;
+      display: block;
+      overflow: visible;
+    }
+
+    /* ── PNL BAR CHART ── */
+    .pnl-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 120px;
+      position: relative;
+    }
+    .pnl-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: center;
+      position: relative;
+    }
+    .pnl-bar {
+      width: 100%;
+      max-width: 28px;
+      border-radius: 2px;
+      transition: opacity 0.15s;
+      cursor: default;
+    }
+    .pnl-bar:hover { opacity: 0.75; }
+    .pnl-bar.win { background: #2a7a4a; }
+    .pnl-bar.loss { background: #b03030; }
+    .pnl-bar-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 4px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 40px;
+    }
+    .pnl-zero-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: var(--line);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    thead th {
+      text-align: left;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      padding: 0 10px 10px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { color: var(--accent); }
+    tbody tr:hover { background: #f5f8fc; }
+    tbody td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    .pnl-pos { color: #2a7a4a; font-weight: 600; }
+    .pnl-neg { color: #b03030; font-weight: 600; }
+    .dir-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+    }
+    .dir-long  { background: #e8f5ee; color: #2a7a4a; }
+    .dir-short { background: #fdecea; color: #b03030; }
+    .dir-other { background: #e8f0f9; color: var(--accent); }
+
+    /* ── TOOLTIP ── */
+    #tooltip {
+      position: fixed;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 5px 9px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 200;
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* ── EMPTY ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .empty-state strong {
+      display: block;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body class="canvas-page">
+  <div class="canvas-thread"></div>
+  <div id="tooltip"></div>
+
+  <a class="return-arrow" href="index.html" title="Back to canvas">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 3L5 8l5 5"/>
+    </svg>
+  </a>
+
+  <div class="page-wrap">
+    <header>
+      <div class="page-label">Paper Trading</div>
+      <h1 class="page-title">Trades</h1>
+      <p class="page-sub">PnL history pulled from Google Sheets — TradingView export format.</p>
+    </header>
+
+    <!-- CONFIG -->
+    <div id="config-banner">
+      <label for="csv-url-input">Sheets CSV URL</label>
+      <input id="csv-url-input" type="text" placeholder="Paste your Google Sheets published CSV link…"/>
+      <button id="load-btn">Load</button>
+      <span id="load-status"></span>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-grid" id="summary-grid">
+      <div class="s-card"><div class="s-label">Starting Capital</div><div class="s-value" id="s-start">—</div></div>
+      <div class="s-card"><div class="s-label">Current Balance</div><div class="s-value" id="s-balance">—</div></div>
+      <div class="s-card" id="s-pnl-card"><div class="s-label">Total PnL</div><div class="s-value" id="s-pnl">—</div><div class="s-sub" id="s-pnl-pct"></div></div>
+      <div class="s-card"><div class="s-label">Win Rate</div><div class="s-value" id="s-winrate">—</div><div class="s-sub" id="s-wl"></div></div>
+      <div class="s-card"><div class="s-label">Avg Trade</div><div class="s-value" id="s-avg">—</div></div>
+      <div class="s-card pos"><div class="s-label">Best Trade</div><div class="s-value" id="s-best">—</div><div class="s-sub" id="s-best-sub"></div></div>
+      <div class="s-card neg"><div class="s-label">Worst Trade</div><div class="s-value" id="s-worst">—</div><div class="s-sub" id="s-worst-sub"></div></div>
+      <div class="s-card"><div class="s-label">Total Trades</div><div class="s-value" id="s-count">—</div></div>
+    </div>
+
+    <!-- EQUITY + PNL BARS -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Equity Curve</div>
+        <svg id="equity-svg" viewBox="0 0 700 180" preserveAspectRatio="none">
+          <text x="350" y="95" text-anchor="middle" fill="#5a6e82" font-size="13" font-family="DM Sans, sans-serif">No data loaded</text>
+        </svg>
+      </div>
+      <div class="panel">
+        <div class="panel-title">PnL Per Trade</div>
+        <div id="pnl-bar-chart"></div>
+      </div>
+    </div>
+
+    <!-- TRADES TABLE -->
+    <div class="panel">
+      <div class="panel-title">Trade Log</div>
+      <div class="table-wrap">
+        <table id="trade-table">
+          <thead>
+            <tr>
+              <th data-col="time">Time</th>
+              <th data-col="ticker">Ticker</th>
+              <th data-col="direction">Direction</th>
+              <th data-col="balanceBefore" style="text-align:right">Balance Before</th>
+              <th data-col="balanceAfter"  style="text-align:right">Balance After</th>
+              <th data-col="pnl"           style="text-align:right">PnL</th>
+              <th data-col="notes">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="trade-body">
+            <tr><td colspan="7"><div class="empty-state"><strong>No data</strong>Paste your Sheets CSV URL above and click Load.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'nc_trading_csv_url';
+    let allTrades = [];
+    let sortCol = 'time';
+    let sortDir = -1;
+
+    // ── INIT ──────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem(STORAGE_KEY) || '';
+      if (saved) {
+        document.getElementById('csv-url-input').value = saved;
+        loadCSV(saved);
+      }
+      document.getElementById('load-btn').addEventListener('click', () => {
+        const url = document.getElementById('csv-url-input').value.trim();
+        if (!url) return;
+        localStorage.setItem(STORAGE_KEY, url);
+        loadCSV(url);
+      });
+      document.querySelectorAll('thead th[data-col]').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.col;
+          sortDir = (sortCol === col) ? sortDir * -1 : -1;
+          sortCol = col;
+          renderTable(sorted(allTrades));
+        });
+      });
+    });
+
+    // ── LOAD ──────────────────────────────────────────────────
+    function loadCSV(url) {
+      const status = document.getElementById('load-status');
+      status.textContent = 'Loading…';
+      fetch(url)
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(text => {
+          const results = Papa.parse(text, { header: true, skipEmptyLines: true });
+          if (!results.data.length) {
+            status.textContent = 'No data found. Check URL and sharing settings.';
+            return;
+          }
+          allTrades = parseTrades(results.data);
+          if (!allTrades.length) {
+            status.textContent = 'Parsed 0 trades — check column names match expected format.';
+            return;
+          }
+          status.textContent = allTrades.length + ' trades loaded';
+          render();
+        })
+        .catch(err => {
+          status.textContent = 'Failed to fetch (' + err.message + '). Check URL and sharing settings.';
+        });
+    }
+
+    // ── PARSE ─────────────────────────────────────────────────
+    function parseTrades(data) {
+      return data.map(row => {
+        // Normalize keys: lowercase, trim, collapse spaces
+        const r = {};
+        Object.keys(row).forEach(k => {
+          r[k.toLowerCase().trim().replace(/\s+/g, ' ')] = (row[k] || '').trim();
+        });
+
+        // Column aliases — handles TradingView export names and manual sheet names
+        const timeRaw      = r['time'] || r['date'] || '';
+        const balBefore    = parseFloat((r['balance before'] || r['balance_before'] || r['balancebefore'] || '0').replace(/[$,]/g,'')) || 0;
+        const balAfter     = parseFloat((r['balance after']  || r['balance_after']  || r['balanceafter']  || '0').replace(/[$,]/g,'')) || 0;
+        const pnl          = parseFloat((r['realized pnl (value)'] || r['pnl'] || r['realized pnl'] || r['profit'] || '0').replace(/[$,]/g,'')) || 0;
+        const ticker       = r['ticker'] || r['symbol'] || '';
+        const direction    = r['direction'] || r['side'] || r['type'] || '';
+        const notes        = r['notes'] || r['note'] || '';
+
+        const timeObj = timeRaw ? new Date(timeRaw.replace(' ', 'T')) : null;
+
+        return { timeRaw, timeObj, balanceBefore: balBefore, balanceAfter: balAfter, pnl, ticker, direction, notes };
+      }).filter(t => t.timeObj && !isNaN(t.timeObj) && (t.balanceBefore || t.balanceAfter || t.pnl));
+    }
+
+    // ── SORT ──────────────────────────────────────────────────
+    function sorted(trades) {
+      return [...trades].sort((a, b) => {
+        let av = a[sortCol], bv = b[sortCol];
+        if (sortCol === 'time') { av = a.timeObj; bv = b.timeObj; }
+        if (typeof av === 'string') av = av.toLowerCase();
+        if (typeof bv === 'string') bv = bv.toLowerCase();
+        if (av < bv) return -sortDir;
+        if (av > bv) return sortDir;
+        return 0;
+      });
+    }
+
+    // ── RENDER ALL ────────────────────────────────────────────
+    function render() {
+      renderSummary();
+      renderEquityCurve();
+      renderPnLBars();
+      renderTable(sorted(allTrades));
+    }
+
+    // ── SUMMARY ───────────────────────────────────────────────
+    function renderSummary() {
+      const asc = [...allTrades].sort((a, b) => a.timeObj - b.timeObj);
+      const startBal   = asc[0]?.balanceBefore || 0;
+      const currentBal = asc[asc.length - 1]?.balanceAfter || 0;
+      const totalPnL   = allTrades.reduce((s, t) => s + t.pnl, 0);
+      const pct        = startBal ? (totalPnL / startBal) * 100 : 0;
+      const wins       = allTrades.filter(t => t.pnl > 0);
+      const losses     = allTrades.filter(t => t.pnl < 0);
+      const winRate    = allTrades.length ? (wins.length / allTrades.length) * 100 : 0;
+      const avgPnL     = allTrades.length ? totalPnL / allTrades.length : 0;
+      const best       = allTrades.length ? allTrades.reduce((m, t) => t.pnl > m.pnl ? t : m) : null;
+      const worst      = allTrades.length ? allTrades.reduce((m, t) => t.pnl < m.pnl ? t : m) : null;
+
+      document.getElementById('s-start').textContent    = fmtDollar(startBal);
+      document.getElementById('s-balance').textContent  = fmtDollar(currentBal);
+      document.getElementById('s-pnl').textContent      = (totalPnL >= 0 ? '+' : '') + fmtDollar(totalPnL);
+      document.getElementById('s-pnl-pct').textContent  = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+      document.getElementById('s-winrate').textContent  = winRate.toFixed(0) + '%';
+      document.getElementById('s-wl').textContent       = wins.length + 'W / ' + losses.length + 'L';
+      document.getElementById('s-avg').textContent      = (avgPnL >= 0 ? '+' : '') + fmtDollar(avgPnL);
+      document.getElementById('s-best').textContent      = best  ? '+' + fmtDollar(best.pnl)  : '—';
+      document.getElementById('s-best-sub').textContent  = best?.ticker  || '';
+      document.getElementById('s-worst').textContent     = worst ? (worst.pnl < 0 ? '-' : '+') + fmtDollar(worst.pnl) : '—';
+      document.getElementById('s-worst-sub').textContent = worst?.ticker || '';
+      document.getElementById('s-count').textContent    = allTrades.length;
+
+      const pnlCard = document.getElementById('s-pnl-card');
+      pnlCard.className = 's-card ' + (totalPnL >= 0 ? 'pos' : 'neg');
+    }
+
+    // ── EQUITY CURVE ──────────────────────────────────────────
+    function renderEquityCurve() {
+      const svg = document.getElementById('equity-svg');
+      svg.innerHTML = '';
+
+      const asc = [...allTrades].sort((a, b) => a.timeObj - b.timeObj);
+      if (!asc.length) return;
+
+      // Build balance points: start with balanceBefore of first trade, then balanceAfter of each
+      const points = [asc[0].balanceBefore, ...asc.map(t => t.balanceAfter)];
+      const W = 700, H = 180, PAD = { t: 16, r: 10, b: 28, l: 10 };
+      const plotW = W - PAD.l - PAD.r;
+      const plotH = H - PAD.t - PAD.b;
+
+      const minVal = Math.min(...points);
+      const maxVal = Math.max(...points);
+      const range  = maxVal - minVal || 1;
+      // Add 5% padding to range
+      const lo = minVal - range * 0.05;
+      const hi = maxVal + range * 0.05;
+      const rng = hi - lo;
+
+      const xStep = points.length > 1 ? plotW / (points.length - 1) : plotW;
+
+      const toX = i => PAD.l + i * xStep;
+      const toY = v => PAD.t + plotH - ((v - lo) / rng) * plotH;
+
+      // Starting balance reference line
+      const startY = toY(points[0]);
+      const refLine = doc('line', { x1: PAD.l, y1: startY, x2: W - PAD.r, y2: startY,
+        stroke: '#ccd9e8', 'stroke-width': '1', 'stroke-dasharray': '4 3' });
+      svg.appendChild(refLine);
+
+      // Area fill
+      const polyPts = points.map((v, i) => toX(i) + ',' + toY(v)).join(' ');
+      const areaPts = PAD.l + ',' + (H - PAD.b) + ' ' + polyPts + ' ' + toX(points.length - 1) + ',' + (H - PAD.b);
+      const lastPnL = allTrades.reduce((s, t) => s + t.pnl, 0);
+      const fillColor = lastPnL >= 0 ? '#e8f5ee' : '#fdecea';
+      const lineColor = lastPnL >= 0 ? '#2a7a4a' : '#b03030';
+      const area = doc('polygon', { points: areaPts, fill: fillColor, opacity: '0.5' });
+      svg.appendChild(area);
+
+      // Equity line
+      const line = doc('polyline', { points: polyPts, fill: 'none', stroke: lineColor, 'stroke-width': '2', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+      svg.appendChild(line);
+
+      // Dots + tooltips for each trade close
+      asc.forEach((t, i) => {
+        const x = toX(i + 1);
+        const y = toY(t.balanceAfter);
+        const circle = doc('circle', { cx: x, cy: y, r: '4', fill: t.pnl >= 0 ? '#2a7a4a' : '#b03030', stroke: '#fff', 'stroke-width': '1.5', style: 'cursor:default' });
+        circle.addEventListener('mouseenter', e => showTip(e, (t.pnl >= 0 ? '+' : '') + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '') + '\n' + fmtDate(t.timeObj)));
+        circle.addEventListener('mousemove', moveTip);
+        circle.addEventListener('mouseleave', hideTip);
+        svg.appendChild(circle);
+      });
+
+      // X axis labels — first, middle (only if distinct from first/last), last
+      const rawIdxs = [0, Math.floor((points.length - 1) / 2), points.length - 1];
+      const labelIdxs = [...new Set(rawIdxs)]; // dedupe when few trades
+      labelIdxs.forEach(pi => {
+        // pi is a point index (0 = balanceBefore, 1..n = balanceAfter of trade pi-1)
+        const tradeIdx = pi === 0 ? 0 : pi - 1;
+        const d = pi === 0 ? asc[0].timeObj : asc[tradeIdx]?.timeObj;
+        if (!d) return;
+        const x = toX(pi);
+        const anchor = pi === 0 ? 'start' : pi === points.length - 1 ? 'end' : 'middle';
+        const lbl = doc('text', { x, y: H - 4, 'text-anchor': anchor, fill: '#5a6e82', 'font-size': '10', 'font-family': 'DM Sans, sans-serif' });
+        lbl.textContent = fmtDate(d);
+        svg.appendChild(lbl);
+      });
+    }
+
+    // ── PNL BAR CHART ─────────────────────────────────────────
+    function renderPnLBars() {
+      const container = document.getElementById('pnl-bar-chart');
+      container.innerHTML = '';
+
+      const asc = [...allTrades].sort((a, b) => a.timeObj - b.timeObj);
+      if (!asc.length) {
+        container.innerHTML = '<div class="empty-state" style="padding:24px 0"><strong>No trades</strong></div>';
+        return;
+      }
+
+      const maxAbs = Math.max(...asc.map(t => Math.abs(t.pnl)), 1);
+      const maxH   = 100; // px for the tallest bar
+      const zeroH  = 50;  // px from bottom where zero line sits — for mixed data
+
+      const hasLosses = asc.some(t => t.pnl < 0);
+      const winMax  = Math.max(...asc.map(t => t.pnl > 0 ? t.pnl : 0), 1);
+      const lossMax = Math.max(...asc.map(t => t.pnl < 0 ? Math.abs(t.pnl) : 0), 1);
+
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;align-items:flex-end;gap:3px;height:130px;position:relative;';
+
+      // Zero line at middle if there are losses, else at bottom
+      const zeroLineTop = hasLosses ? '50%' : '100%';
+      const zeroLine = document.createElement('div');
+      zeroLine.style.cssText = `position:absolute;left:0;right:0;top:${zeroLineTop};height:1px;background:var(--line);`;
+      wrap.appendChild(zeroLine);
+
+      asc.forEach(t => {
+        const barWrap = document.createElement('div');
+        barWrap.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:center;';
+
+        const inner = document.createElement('div');
+        inner.style.cssText = 'width:100%;display:flex;flex-direction:column;align-items:center;justify-content:' + (hasLosses ? 'center' : 'flex-end') + ';height:100%;';
+
+        if (t.pnl >= 0) {
+          const pct = winMax > 0 ? (t.pnl / winMax) : 0;
+          const h   = Math.max(2, Math.round(pct * (hasLosses ? 55 : 110)));
+          const bar = document.createElement('div');
+          bar.className = 'pnl-bar win';
+          bar.style.cssText = `height:${h}px;width:80%;border-radius:2px 2px 0 0;` + (hasLosses ? 'margin-bottom:0;align-self:flex-end;' : '');
+          bar.title = '+' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '');
+          bar.addEventListener('mouseenter', e => showTip(e, bar.title));
+          bar.addEventListener('mousemove', moveTip);
+          bar.addEventListener('mouseleave', hideTip);
+          if (hasLosses) {
+            inner.style.justifyContent = 'center';
+            inner.style.alignItems = 'center';
+            const topSpace = document.createElement('div');
+            topSpace.style.flex = '1';
+            inner.appendChild(topSpace);
+            inner.appendChild(bar);
+            const botSpace = document.createElement('div');
+            botSpace.style.flex = '1';
+            inner.appendChild(botSpace);
+          } else {
+            inner.appendChild(bar);
+          }
+        } else {
+          const pct = lossMax > 0 ? (Math.abs(t.pnl) / lossMax) : 0;
+          const h   = Math.max(2, Math.round(pct * 55));
+          const bar = document.createElement('div');
+          bar.className = 'pnl-bar loss';
+          bar.style.cssText = `height:${h}px;width:80%;border-radius:0 0 2px 2px;`;
+          bar.title = fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '');
+          bar.addEventListener('mouseenter', e => showTip(e, bar.title));
+          bar.addEventListener('mousemove', moveTip);
+          bar.addEventListener('mouseleave', hideTip);
+          const topSpace = document.createElement('div');
+          topSpace.style.flex = '1';
+          inner.appendChild(topSpace);
+          inner.appendChild(bar);
+        }
+
+        barWrap.appendChild(inner);
+        wrap.appendChild(barWrap);
+      });
+
+      container.appendChild(wrap);
+    }
+
+    // ── TABLE ─────────────────────────────────────────────────
+    function renderTable(trades) {
+      const tbody = document.getElementById('trade-body');
+      tbody.innerHTML = '';
+
+      if (!trades.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><strong>No trades</strong></div></td></tr>';
+        return;
+      }
+
+      trades.forEach(t => {
+        const tr = document.createElement('tr');
+        const dirClass = t.direction.toLowerCase().includes('long')  ? 'dir-long'  :
+                         t.direction.toLowerCase().includes('short') ? 'dir-short' : 'dir-other';
+        const dirLabel = t.direction || '—';
+        tr.innerHTML = `
+          <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">${esc(fmtDatetime(t.timeObj))}</td>
+          <td style="font-weight:500">${esc(t.ticker) || '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${t.direction ? '<span class="dir-badge ' + dirClass + '">' + esc(dirLabel) + '</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+          <td style="text-align:right;color:var(--muted)">${fmtDollar(t.balanceBefore)}</td>
+          <td style="text-align:right">${fmtDollar(t.balanceAfter)}</td>
+          <td style="text-align:right" class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${(t.pnl >= 0 ? '+' : '') + fmtDollar(t.pnl)}</td>
+          <td style="color:var(--muted);font-size:0.75rem">${esc(t.notes)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── UTILS ─────────────────────────────────────────────────
+    function fmtDollar(n) {
+      return '$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    function fmtDate(d) {
+      if (!d) return '';
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    }
+    function fmtDatetime(d) {
+      if (!d) return '';
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) + ' ' +
+             d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function doc(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.keys(attrs).forEach(k => el.setAttribute(k, attrs[k]));
+      return el;
+    }
+    function showTip(e, text) {
+      const tip = document.getElementById('tooltip');
+      tip.textContent = text;
+      tip.style.display = 'block';
+      moveTip(e);
+    }
+    function moveTip(e) {
+      const tip = document.getElementById('tooltip');
+      tip.style.left = (e.clientX + 12) + 'px';
+      tip.style.top  = (e.clientY - 28) + 'px';
+    }
+    function hideTip() {
+      document.getElementById('tooltip').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
