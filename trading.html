@@ -408,6 +408,20 @@
         });
     }
 
+    // ── DATE PARSER (handles Sheets-stripped leading zeros) ───
+    function parseTradeDate(s) {
+      if (!s) return null;
+      // Pad single-digit hour: "2026-05-29 7:40:44" → "2026-05-29T07:40:44"
+      let str = s.trim()
+        .replace(/^(\d{4}-\d{2}-\d{2})[T ](\d):/, '$1T0$2:')  // pad hour
+        .replace(' ', 'T');                                      // space → T
+      let d = new Date(str);
+      if (!isNaN(d)) return d;
+      // Fallback: try parsing as-is (handles locale formats like M/D/YYYY)
+      d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+
     // ── PARSE ─────────────────────────────────────────────────
     function parseTrades(data) {
       return data.map(row => {
@@ -426,7 +440,7 @@
         const direction    = r['direction'] || r['side'] || r['type'] || '';
         const notes        = r['notes'] || r['note'] || '';
 
-        const timeObj = timeRaw ? new Date(timeRaw.replace(' ', 'T')) : null;
+        const timeObj = parseTradeDate(timeRaw);
 
         return { timeRaw, timeObj, balanceBefore: balBefore, balanceAfter: balAfter, pnl, ticker, direction, notes };
       }).filter(t => t.timeObj && !isNaN(t.timeObj) && (t.balanceBefore || t.balanceAfter || t.pnl));
