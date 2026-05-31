@@ -338,16 +338,18 @@
           <thead>
             <tr>
               <th data-col="time">Time</th>
-              <th data-col="ticker">Ticker</th>
-              <th data-col="direction">Direction</th>
-              <th data-col="balanceBefore" style="text-align:right">Balance Before</th>
-              <th data-col="balanceAfter"  style="text-align:right">Balance After</th>
-              <th data-col="pnl"           style="text-align:right">PnL</th>
+              <th data-col="ticker">Symbol</th>
+              <th data-col="direction">Side</th>
+              <th data-col="contracts" style="text-align:right">Qty</th>
+              <th data-col="entryPrice" style="text-align:right">Entry</th>
+              <th data-col="closePrice" style="text-align:right">Close</th>
+              <th data-col="balanceAfter" style="text-align:right">Balance</th>
+              <th data-col="pnl"          style="text-align:right">PnL</th>
               <th data-col="notes">Notes</th>
             </tr>
           </thead>
           <tbody id="trade-body">
-            <tr><td colspan="7"><div class="empty-state"><strong>No data</strong>Paste your Sheets CSV URL above and click Load.</div></td></tr>
+            <tr><td colspan="9"><div class="empty-state"><strong>No data</strong>Paste your Sheets CSV URL above and click Load.</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -432,17 +434,30 @@
         });
 
         // Column aliases — handles TradingView export names and manual sheet names
-        const timeRaw      = r['time'] || r['date'] || '';
-        const balBefore    = parseFloat((r['balance before'] || r['balance_before'] || r['balancebefore'] || '0').replace(/[$,]/g,'')) || 0;
-        const balAfter     = parseFloat((r['balance after']  || r['balance_after']  || r['balanceafter']  || '0').replace(/[$,]/g,'')) || 0;
-        const pnl          = parseFloat((r['realized pnl (value)'] || r['pnl'] || r['realized pnl'] || r['profit'] || '0').replace(/[$,]/g,'')) || 0;
-        const ticker       = r['ticker'] || r['symbol'] || '';
-        const direction    = r['direction'] || r['side'] || r['type'] || '';
-        const notes        = r['notes'] || r['note'] || '';
+        const timeRaw   = r['time'] || r['date'] || '';
+        const balBefore = parseFloat((r['balance before'] || r['balance_before'] || '0').replace(/[$,]/g,'')) || 0;
+        const balAfter  = parseFloat((r['balance after']  || r['balance_after']  || '0').replace(/[$,]/g,'')) || 0;
+        const pnl       = parseFloat((r['realized pnl (value)'] || r['pnl'] || r['realized pnl'] || r['profit'] || '0').replace(/[$,]/g,'')) || 0;
+        const actionRaw = r['action'] || '';
+        const notes     = r['notes'] || r['note'] || '';
+
+        // Parse Action field: "Close long position for symbol CME_MINI:NQM2026 at price 30056.25 for 3 units. Position AVG Price was 30048.75..."
+        const dirMatch      = actionRaw.match(/Close (long|short) position/i);
+        const symMatch      = actionRaw.match(/for symbol ([^\s]+)/i);
+        const closePxMatch  = actionRaw.match(/at price ([\d.]+)/i);
+        const unitsMatch    = actionRaw.match(/for ([\d.]+) units/i);
+        const entryPxMatch  = actionRaw.match(/Position AVG Price was ([\d.]+)/i);
+
+        const direction  = dirMatch   ? dirMatch[1].toLowerCase()      : (r['direction'] || r['side'] || '');
+        const ticker     = symMatch   ? symMatch[1]                     : (r['ticker'] || r['symbol'] || '');
+        const closePrice = closePxMatch  ? parseFloat(closePxMatch[1])  : null;
+        const contracts  = unitsMatch    ? parseFloat(unitsMatch[1])    : null;
+        const entryPrice = entryPxMatch  ? parseFloat(entryPxMatch[1])  : null;
 
         const timeObj = parseTradeDate(timeRaw);
 
-        return { timeRaw, timeObj, balanceBefore: balBefore, balanceAfter: balAfter, pnl, ticker, direction, notes };
+        return { timeRaw, timeObj, balanceBefore: balBefore, balanceAfter: balAfter, pnl,
+                 ticker, direction, closePrice, contracts, entryPrice, notes, actionRaw };
       }).filter(t => t.timeObj && !isNaN(t.timeObj) && (t.balanceBefore || t.balanceAfter || t.pnl));
     }
 
@@ -549,7 +564,8 @@
         const x = toX(i + 1);
         const y = toY(t.balanceAfter);
         const circle = doc('circle', { cx: x, cy: y, r: '4', fill: t.pnl >= 0 ? '#2a7a4a' : '#b03030', stroke: '#fff', 'stroke-width': '1.5', style: 'cursor:default' });
-        circle.addEventListener('mouseenter', e => showTip(e, (t.pnl >= 0 ? '+' : '') + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '') + '\n' + fmtDate(t.timeObj)));
+        const sym = t.ticker ? t.ticker.replace(/^[^:]+:/, '') : '';
+        circle.addEventListener('mouseenter', e => showTip(e, (t.pnl >= 0 ? '+' : '-') + fmtDollar(t.pnl) + (sym ? ' · ' + sym : '') + (t.contracts ? ' (' + t.contracts + ' ct)' : '') + ' — ' + fmtDate(t.timeObj)));
         circle.addEventListener('mousemove', moveTip);
         circle.addEventListener('mouseleave', hideTip);
         svg.appendChild(circle);
@@ -612,7 +628,7 @@
           const bar = document.createElement('div');
           bar.className = 'pnl-bar win';
           bar.style.cssText = `height:${h}px;width:80%;border-radius:2px 2px 0 0;` + (hasLosses ? 'margin-bottom:0;align-self:flex-end;' : '');
-          bar.title = '+' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '');
+          bar.title = '+' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker.replace(/^[^:]+:/, '') : '');
           bar.addEventListener('mouseenter', e => showTip(e, bar.title));
           bar.addEventListener('mousemove', moveTip);
           bar.addEventListener('mouseleave', hideTip);
@@ -635,7 +651,7 @@
           const bar = document.createElement('div');
           bar.className = 'pnl-bar loss';
           bar.style.cssText = `height:${h}px;width:80%;border-radius:0 0 2px 2px;`;
-          bar.title = fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker : '');
+          bar.title = '-' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker.replace(/^[^:]+:/, '') : '');
           bar.addEventListener('mouseenter', e => showTip(e, bar.title));
           bar.addEventListener('mousemove', moveTip);
           bar.addEventListener('mouseleave', hideTip);
@@ -658,20 +674,24 @@
       tbody.innerHTML = '';
 
       if (!trades.length) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><strong>No trades</strong></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><strong>No trades</strong></div></td></tr>';
         return;
       }
 
       trades.forEach(t => {
         const tr = document.createElement('tr');
-        const dirClass = t.direction.toLowerCase().includes('long')  ? 'dir-long'  :
-                         t.direction.toLowerCase().includes('short') ? 'dir-short' : 'dir-other';
-        const dirLabel = t.direction || '—';
+        const dir = t.direction.toLowerCase();
+        const dirClass = dir === 'long' ? 'dir-long' : dir === 'short' ? 'dir-short' : 'dir-other';
+        const dirLabel = dir === 'long' ? 'Long' : dir === 'short' ? 'Short' : t.direction || '—';
+        // Shorten symbol: CME_MINI:NQM2026 → NQM2026
+        const symDisplay = t.ticker ? t.ticker.replace(/^[^:]+:/, '') : '—';
         tr.innerHTML = `
           <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">${esc(fmtDatetime(t.timeObj))}</td>
-          <td style="font-weight:500">${esc(t.ticker) || '<span style="color:var(--muted)">—</span>'}</td>
+          <td style="font-weight:500;font-size:0.82rem">${esc(symDisplay)}</td>
           <td>${t.direction ? '<span class="dir-badge ' + dirClass + '">' + esc(dirLabel) + '</span>' : '<span style="color:var(--muted)">—</span>'}</td>
-          <td style="text-align:right;color:var(--muted)">${fmtDollar(t.balanceBefore)}</td>
+          <td style="text-align:right;color:var(--muted)">${t.contracts != null ? t.contracts : '—'}</td>
+          <td style="text-align:right;color:var(--muted);font-size:0.78rem">${t.entryPrice != null ? fmtPrice(t.entryPrice) : '—'}</td>
+          <td style="text-align:right;color:var(--muted);font-size:0.78rem">${t.closePrice != null ? fmtPrice(t.closePrice) : '—'}</td>
           <td style="text-align:right">${fmtDollar(t.balanceAfter)}</td>
           <td style="text-align:right" class="${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${(t.pnl >= 0 ? '+' : '') + fmtDollar(t.pnl)}</td>
           <td style="color:var(--muted);font-size:0.75rem">${esc(t.notes)}</td>
@@ -683,6 +703,10 @@
     // ── UTILS ─────────────────────────────────────────────────
     function fmtDollar(n) {
       return '$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    function fmtPrice(n) {
+      // Format price with up to 2 decimal places, no trailing zeros
+      return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
     }
     function fmtDate(d) {
       if (!d) return '';
