@@ -316,26 +316,24 @@
       </div>
     </div>
 
-    <div class="project-tile" id="tile-qm" onclick="switchProject('qm')">
+    <div class="project-tile" id="tile-dash" onclick="switchProject('dash')">
       <div class="tile-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-          <rect width="36" height="36" rx="8" fill="#0d1117"/>
-          <rect x="6"  y="6"  width="9" height="9" rx="2" fill="#4d8fc7"/>
-          <rect x="17" y="6"  width="9" height="9" rx="2" fill="#4d8fc7" opacity=".65"/>
-          <rect x="6"  y="17" width="9" height="9" rx="2" fill="#3d9e6b" opacity=".85"/>
-          <rect x="17" y="17" width="9" height="9" rx="2" fill="#3d9e6b" opacity=".5"/>
-          <rect x="28" y="6"  width="2" height="9" rx="1" fill="#4d8fc7" opacity=".25"/>
-          <rect x="6"  y="28" width="9" height="2" rx="1" fill="#c47d35" opacity=".4"/>
-          <rect x="17" y="28" width="9" height="2" rx="1" fill="#c47d35" opacity=".25"/>
-          <text x="10.5" y="13" text-anchor="middle" font-family="monospace" font-size="4.5" font-weight="600" fill="#e6f1fb">Md</text>
-          <text x="21.5" y="13" text-anchor="middle" font-family="monospace" font-size="4.5" font-weight="600" fill="#b5d4f4">Bio</text>
-          <text x="10.5" y="24" text-anchor="middle" font-family="monospace" font-size="4.5" font-weight="600" fill="#c0dd97">Ven</text>
-          <text x="21.5" y="24" text-anchor="middle" font-family="monospace" font-size="4.5" font-weight="600" fill="#9fe1cb">3DW</text>
+          <rect width="36" height="36" rx="8" fill="#f0f4f8"/>
+          <!-- bar chart bars -->
+          <rect x="6"  y="18" width="5" height="12" rx="1.5" fill="#1a6db5"/>
+          <rect x="13" y="12" width="5" height="18" rx="1.5" fill="#1a6db5" opacity=".75"/>
+          <rect x="20" y="20" width="5" height="10" rx="1.5" fill="#1a6db5" opacity=".5"/>
+          <rect x="27" y="8"  width="5" height="22" rx="1.5" fill="#2a7a4a" opacity=".85"/>
+          <!-- baseline -->
+          <line x1="5" y1="30" x2="32" y2="30" stroke="#ccd9e8" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- sparkline -->
+          <polyline points="6,16 13,10 20,18 27,7" fill="none" stroke="#1a6db5" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity=".4"/>
         </svg>
       </div>
       <div>
-        <div class="tile-name">Quest Map</div>
-        <div class="tile-tag">HTML · Firebase</div>
+        <div class="tile-name">Dashboards</div>
+        <div class="tile-tag">HTML · Sheets</div>
       </div>
     </div>
 
@@ -452,13 +450,17 @@
         <p>Immunocascade is an interactive immunology learning game built in vanilla JS and SVG. Each level puts you in the middle of an immune response (influenza, bacterial infection, COVID-19, allergy, cancer) and asks you to assemble the correct immune cells and signaling molecules in the right order.</p>
         <a href="https://chan602.com/immunocascade" target="_blank" class="app-link">Play Immunocascade →</a>`,
     },
-    'qm': {
-      collection: 'devblog-qm',
-      label: 'Building in Public · Quest Map',
-      originTitle: 'The Project',
+    'dash': {
+      collection: null,
+      label: 'Building in Public · Dashboard Trackers',
+      originTitle: 'Dashboard Trackers',
       originHTML: `
-        <p>Quest Map is a personal goal tracker styled as a periodic table. Each element is a goal domain (Medicine, EMS, Research, Ventures, Three Daily Wins, Immunocascade, and more). Backed by Firestore with a password gated edit mode, click to expand detail panels, and a Mission Log for completed goals.</p>
-        <a href="quest-map.html" target="_blank" class="app-link">Open Quest Map →</a>`,
+        <p>Most financial and personal data lives in spreadsheets — useful for storage, but hard to read at a glance. These dashboards take Google Sheets or Excel documents as input and convert them into clean, visual interfaces: charts, category breakdowns, subscription tracking, PnL curves, and more. The pipeline is simple: paste data into a structured sheet, publish it as a CSV, and the dashboard fetches and renders it live. No backend, no database — just a published CSV URL and a static HTML page.</p>
+        <p>The system is built with Claude AI as a collaborator: raw bank exports and trading history get cleaned and formatted into the sheet schema through conversation, with corrections logged so the model learns recurring categorization rules over time. The result is a personal finance and trading tracker that stays current with minimal manual work.</p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem">
+          <a href="money-management.html" target="_blank" class="app-link">Money Management →</a>
+          <a href="quest-map.html" target="_blank" class="app-link" style="background:var(--muted)">Quest Map →</a>
+        </div>`,
     },
   };
 
@@ -550,6 +552,13 @@
   async function loadPosts() {
     const loadingEl = document.getElementById('postsLoading');
     const listEl = document.getElementById('postsList');
+    // Projects with no Firestore collection show no blog log
+    if (!PROJECTS[activeProject].collection) {
+      loadingEl.style.display = 'none';
+      listEl.innerHTML = '';
+      allPosts = [];
+      return;
+    }
     loadingEl.style.display = 'block';
     listEl.innerHTML = '';
     try {
