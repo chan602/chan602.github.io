@@ -410,17 +410,35 @@
         });
     }
 
-    // ── DATE PARSER (handles Sheets-stripped leading zeros) ───
+    // ── DATE PARSER ───────────────────────────────────────────
+    // Handles three formats Google Sheets can export:
+    //   ISO text (pasted as text):  "2026-05-29 7:40:44"  (leading zero stripped)
+    //   ISO text (full):            "2026-05-29 07:40:44"
+    //   Locale datetime (auto-recognized by Sheets): "6/1/2026 7:16:50"
     function parseTradeDate(s) {
       if (!s) return null;
-      // Pad single-digit hour: "2026-05-29 7:40:44" → "2026-05-29T07:40:44"
-      let str = s.trim()
-        .replace(/^(\d{4}-\d{2}-\d{2})[T ](\d):/, '$1T0$2:')  // pad hour
-        .replace(' ', 'T');                                      // space → T
-      let d = new Date(str);
-      if (!isNaN(d)) return d;
-      // Fallback: try parsing as-is (handles locale formats like M/D/YYYY)
-      d = new Date(s);
+      const str = s.trim();
+
+      // 1. YYYY-MM-DD H?H:MM:SS  →  pad hour, add T
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const iso = str
+          .replace(/^(\d{4}-\d{2}-\d{2})[T ](\d):/, '$1T0$2:')
+          .replace(' ', 'T');
+        const d = new Date(iso);
+        if (!isNaN(d)) return d;
+      }
+
+      // 2. M/D/YYYY H?H:MM:SS  (Sheets locale export for auto-recognized datetimes)
+      const mdy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})/);
+      if (mdy) {
+        const [, mo, dy, yr, hr, mn, sc] = mdy;
+        const iso = `${yr}-${mo.padStart(2,'0')}-${dy.padStart(2,'0')}T${hr.padStart(2,'0')}:${mn}:${sc}`;
+        const d = new Date(iso);
+        if (!isNaN(d)) return d;
+      }
+
+      // 3. Final fallback
+      const d = new Date(str);
       return isNaN(d) ? null : d;
     }
 
