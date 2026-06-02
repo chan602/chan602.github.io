@@ -453,9 +453,10 @@
 
         // Column aliases — handles TradingView export names and manual sheet names
         const timeRaw   = r['time'] || r['date'] || '';
-        const balBefore = parseFloat((r['balance before'] || r['balance_before'] || '0').replace(/[$,]/g,'')) || 0;
-        const balAfter  = parseFloat((r['balance after']  || r['balance_after']  || '0').replace(/[$,]/g,'')) || 0;
-        const pnl       = parseFloat((r['realized pnl (value)'] || r['pnl'] || r['realized pnl'] || r['profit'] || '0').replace(/[$,]/g,'')) || 0;
+        const cleanNum  = s => s.replace(/[$,]/g,'').replace(/−/g,'-'); // normalize Unicode minus → ASCII minus
+        const balBefore = parseFloat(cleanNum(r['balance before'] || r['balance_before'] || '0')) || 0;
+        const balAfter  = parseFloat(cleanNum(r['balance after']  || r['balance_after']  || '0')) || 0;
+        const pnl       = parseFloat(cleanNum(r['realized pnl (value)'] || r['pnl'] || r['realized pnl'] || r['profit'] || '0')) || 0;
         const actionRaw = r['action'] || '';
         const notes     = r['notes'] || r['note'] || '';
 
