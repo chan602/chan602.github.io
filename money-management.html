@@ -659,9 +659,9 @@
       const income = rows.filter(r => r.type === 'income').reduce((s,r) => s+r.amount, 0);
       const spend  = rows.filter(r => r.type === 'expense').reduce((s,r) => s+r.amount, 0);
       const net    = income - spend;
-      const subs   = rows.filter(r => r.category === 'Subscriptions' && r.type === 'expense');
-      const subTotal = subs.reduce((s,r) => s+r.amount, 0);
-      const subCount = new Set(subs.map(r => r.description.toLowerCase())).size;
+      const subRates = computeSubRates();
+      const subTotal = subRates.reduce((s,r) => s+r.totalMonthly, 0);
+      const subCount = subRates.length;
 
       document.getElementById('s-income').textContent = fmt(income);
       document.getElementById('s-income-sub').textContent = rows.filter(r=>r.type==='income').length + ' transactions';
@@ -778,48 +778,65 @@
       });
     }
 
-    // ── SUBSCRIPTIONS ──────────────────────────────────────────
-    function renderSubscriptions() {
+    // ── SUBSCRIPTION MONTHLY RATE ENGINE ──────────────────────
+    // Convention: add "annual" anywhere in a transaction's Notes field
+    // to mark it as an annual charge. Dashboard divides by 12 automatically.
+    // Monthly charges use the average of all occurrences (handles small price changes).
+    function computeSubRates() {
       const rows = allRows.filter(r => r.category === 'Subscriptions' && r.type === 'expense');
-      const seen = {};
+      const groups = {};
       rows.forEach(r => {
         const key = r.description.toLowerCase();
-        if (!seen[key]) seen[key] = { name: r.description, amounts: [], count: 0 };
-        seen[key].amounts.push(r.amount);
-        seen[key].count++;
+        if (!groups[key]) groups[key] = { name: r.description, annual: [], monthly: [] };
+        const isAnnual = (r.notes || '').toLowerCase().includes('annual');
+        if (isAnnual) groups[key].annual.push(r.amount);
+        else          groups[key].monthly.push(r.amount);
       });
 
-      const sorted = Object.values(seen).sort((a,b) => {
-        const avgA = a.amounts.reduce((s,v)=>s+v,0)/a.amounts.length;
-        const avgB = b.amounts.reduce((s,v)=>s+v,0)/b.amounts.length;
-        return avgB - avgA;
-      });
+      return Object.values(groups).map(g => {
+        // Annual: sum all annual charges / 12 (e.g. two domain renewals → combined annualized cost)
+        const annualMonthly = g.annual.length
+          ? g.annual.reduce((s,v) => s+v, 0) / 12
+          : 0;
+        // Monthly: average of all monthly charges
+        const avgMonthly = g.monthly.length
+          ? g.monthly.reduce((s,v) => s+v, 0) / g.monthly.length
+          : 0;
+        const totalMonthly = annualMonthly + avgMonthly;
 
+        const hasAnnual  = g.annual.length  > 0;
+        const hasMonthly = g.monthly.length > 0;
+        const freqLabel  = hasAnnual && hasMonthly ? 'annual + monthly'
+                         : hasAnnual               ? 'annual'
+                         :                           'monthly';
+        return { name: g.name, totalMonthly, freqLabel };
+      }).sort((a, b) => b.totalMonthly - a.totalMonthly);
+    }
+
+    // ── SUBSCRIPTIONS ──────────────────────────────────────────
+    function renderSubscriptions() {
+      const rates = computeSubRates();
       const container = document.getElementById('subs-list');
       container.innerHTML = '';
 
-      if (!sorted.length) {
+      if (!rates.length) {
         container.innerHTML = '<p style="font-size:0.82rem;color:var(--muted)">No subscriptions found. Tag transactions as category "Subscriptions".</p>';
         return;
       }
 
-      const totalMonthly = sorted.reduce((s,sub) => {
-        const avg = sub.amounts.reduce((a,v)=>a+v,0)/sub.amounts.length;
-        return s + avg;
-      }, 0);
-
+      const totalMonthly = rates.reduce((s, r) => s + r.totalMonthly, 0);
       document.getElementById('s-subs').textContent = fmt(totalMonthly);
+      document.getElementById('s-subs-sub').textContent = rates.length + ' recurring services';
 
-      sorted.forEach(sub => {
-        const avg = sub.amounts.reduce((a,v)=>a+v,0)/sub.amounts.length;
+      rates.forEach(sub => {
         const row = document.createElement('div');
         row.className = 'sub-row';
         row.innerHTML = `
           <div>
             <div class="sub-name">${esc(sub.name)}</div>
-            <div class="sub-freq">${sub.count}× seen</div>
+            <div class="sub-freq">${sub.freqLabel}</div>
           </div>
-          <div class="sub-amount">${fmt(avg)}/mo</div>
+          <div class="sub-amount">${fmt(sub.totalMonthly)}/mo</div>
         `;
         container.appendChild(row);
       });
