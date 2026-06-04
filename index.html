@@ -14,6 +14,16 @@
       overflow: hidden;
       cursor: none;
       background: var(--bg);
+      touch-action: none;
+    }
+
+    /* ── MOBILE ── */
+    @media (pointer: coarse) {
+      html, body { cursor: auto; }
+      #cur-dot, #cur-ring { display: none !important; }
+      #draw-canvas { display: none !important; }
+      .draw-tool { display: none !important; }
+      .orbit-card, .resume-pill, #linkedin-link, #email-link { cursor: pointer; }
     }
 
     /* ── CUSTOM CURSOR ── */
@@ -828,7 +838,7 @@
       <line x1="12" y1="8" x2="12" y2="13"/>
       <line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
-    <span>drawing · esc to put down</span>
+    <span>drawing · esc or right-click to put down</span>
   </div>
 
   <!-- CLEAR ALL (appears after first stroke) -->
@@ -1002,15 +1012,38 @@
 
     document.addEventListener('mouseup', () => { dragging = false; });
 
-    // Touch panning
-    let tx0, ty0;
+    // Touch panning + pinch-to-zoom
+    let tx0, ty0, lastPinchDist = 0;
+
     document.addEventListener('touchstart', e => {
+      lastPinchDist = 0;
       if (e.touches.length !== 1) return;
       tx0 = e.touches[0].clientX - worldX;
       ty0 = e.touches[0].clientY - worldY;
     }, { passive: true });
 
     document.addEventListener('touchmove', e => {
+      if (e.touches.length === 2) {
+        // Pinch-to-zoom — zoom toward the midpoint between fingers
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (lastPinchDist > 0) {
+          const newScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, scale * (dist / lastPinchDist)));
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          const cx = midX - window.innerWidth  / 2;
+          const cy = midY - window.innerHeight / 2;
+          const ratio = newScale / scale;
+          worldX = cx * (1 - ratio) + worldX * ratio;
+          worldY = cy * (1 - ratio) + worldY * ratio;
+          scale = newScale;
+          gsap.set(world, { x: worldX, y: worldY, scale, transformOrigin: '0px 0px' });
+        }
+        lastPinchDist = dist;
+        return;
+      }
+      lastPinchDist = 0;
       if (e.touches.length !== 1) return;
       worldX = Math.max(-PAN_LIMIT_X, Math.min(PAN_LIMIT_X, e.touches[0].clientX - tx0));
       worldY = Math.max(-PAN_LIMIT_Y, Math.min(PAN_LIMIT_Y, e.touches[0].clientY - ty0));
@@ -1018,6 +1051,8 @@
       ty0 = e.touches[0].clientY - worldY;
       gsap.set(world, { x: worldX, y: worldY });
     }, { passive: true });
+
+    document.addEventListener('touchend', () => { lastPinchDist = 0; }, { passive: true });
 
 
     /* ─────────────────────────────────────────
@@ -1259,6 +1294,12 @@
     }
 
 
+    // Update hint text for touch devices
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      const hint = document.getElementById('drag-hint');
+      if (hint) hint.textContent = 'Pinch to zoom · drag to explore';
+    }
+
     // Back button: bfcache restores exact JS state including off-screen worldX/Y.
     // Snap canvas back to origin so user isn't lost.
     window.addEventListener('pageshow', e => {
@@ -1456,7 +1497,8 @@
       // Hide cursor ring while holding tool
       ring.style.display = 'none';
 
-      // Show mode label
+      // Swap hint: hide drag-hint, show draw mode label
+      gsap.to('#drag-hint', { opacity: 0, duration: 0.2 });
       drawLabel.style.display = 'flex';
       gsap.fromTo(drawLabel, { opacity: 0 }, { opacity: 1, duration: 0.3 });
     };
@@ -1499,11 +1541,12 @@
       // Disable canvas pointer events
       drawCanvas.style.pointerEvents = 'none';
 
-      // Hide mode label
+      // Swap hint: hide draw mode label, restore drag-hint
       gsap.to(drawLabel, {
         opacity: 0, duration: 0.2,
         onComplete: () => { drawLabel.style.display = 'none'; }
       });
+      gsap.to('#drag-hint', { opacity: 1, duration: 0.3 });
     }
 
     // ── Cursor follower tracks mouse (document-level, always) ──
