@@ -606,85 +606,89 @@
       });
     }
 
-    // ── PNL BAR CHART ─────────────────────────────────────────
+    // ── PNL BAR CHART (SVG) ───────────────────────────────────
     function renderPnLBars() {
       const container = document.getElementById('pnl-bar-chart');
       container.innerHTML = '';
 
       const asc = [...allTrades].sort((a, b) => a.timeObj - b.timeObj);
       if (!asc.length) {
-        container.innerHTML = '<div class="empty-state" style="padding:24px 0"><strong>No trades</strong></div>';
+        container.innerHTML = '<p style="font-size:0.82rem;color:var(--muted);padding-top:8px">No trades</p>';
         return;
       }
 
-      const maxAbs = Math.max(...asc.map(t => Math.abs(t.pnl)), 1);
-      const maxH   = 100; // px for the tallest bar
-      const zeroH  = 50;  // px from bottom where zero line sits — for mixed data
+      const W = 300, H = 150;
+      const PAD = { t: 8, r: 8, b: 20, l: 8 };
+      const plotW = W - PAD.l - PAD.r;
+      const plotH = H - PAD.t - PAD.b;
 
       const hasLosses = asc.some(t => t.pnl < 0);
-      const winMax  = Math.max(...asc.map(t => t.pnl > 0 ? t.pnl : 0), 1);
-      const lossMax = Math.max(...asc.map(t => t.pnl < 0 ? Math.abs(t.pnl) : 0), 1);
+      const maxAbs    = Math.max(...asc.map(t => Math.abs(t.pnl)), 1);
 
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;align-items:flex-end;gap:3px;height:130px;position:relative;';
+      // Zero Y position: center if mixed, bottom if all wins
+      const zeroY = hasLosses
+        ? PAD.t + plotH * 0.5
+        : PAD.t + plotH;
 
-      // Zero line at middle if there are losses, else at bottom
-      const zeroLineTop = hasLosses ? '50%' : '100%';
-      const zeroLine = document.createElement('div');
-      zeroLine.style.cssText = `position:absolute;left:0;right:0;top:${zeroLineTop};height:1px;background:var(--line);`;
-      wrap.appendChild(zeroLine);
+      // Scale: map abs(pnl) to pixels, capped at available half-height
+      const halfH   = hasLosses ? plotH * 0.5 : plotH;
+      const MIN_BAR = 5; // minimum visible px
+      const scale   = v => Math.max(MIN_BAR, (Math.abs(v) / maxAbs) * halfH);
 
-      asc.forEach(t => {
-        const barWrap = document.createElement('div');
-        barWrap.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:center;';
+      const barW  = Math.max(6, Math.floor((plotW / asc.length) * 0.6));
+      const step  = plotW / asc.length;
 
-        const inner = document.createElement('div');
-        inner.style.cssText = 'width:100%;display:flex;flex-direction:column;align-items:center;justify-content:' + (hasLosses ? 'center' : 'flex-end') + ';height:100%;';
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', H + 'px');
+      svg.style.display = 'block';
+      svg.style.overflow = 'visible';
 
-        if (t.pnl >= 0) {
-          const pct = winMax > 0 ? (t.pnl / winMax) : 0;
-          const h   = Math.max(2, Math.round(pct * (hasLosses ? 55 : 110)));
-          const bar = document.createElement('div');
-          bar.className = 'pnl-bar win';
-          bar.style.cssText = `height:${h}px;width:80%;border-radius:2px 2px 0 0;` + (hasLosses ? 'margin-bottom:0;align-self:flex-end;' : '');
-          bar.title = '+' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker.replace(/^[^:]+:/, '') : '');
-          bar.addEventListener('mouseenter', e => showTip(e, bar.title));
-          bar.addEventListener('mousemove', moveTip);
-          bar.addEventListener('mouseleave', hideTip);
-          if (hasLosses) {
-            inner.style.justifyContent = 'center';
-            inner.style.alignItems = 'center';
-            const topSpace = document.createElement('div');
-            topSpace.style.flex = '1';
-            inner.appendChild(topSpace);
-            inner.appendChild(bar);
-            const botSpace = document.createElement('div');
-            botSpace.style.flex = '1';
-            inner.appendChild(botSpace);
-          } else {
-            inner.appendChild(bar);
-          }
-        } else {
-          const pct = lossMax > 0 ? (Math.abs(t.pnl) / lossMax) : 0;
-          const h   = Math.max(2, Math.round(pct * 55));
-          const bar = document.createElement('div');
-          bar.className = 'pnl-bar loss';
-          bar.style.cssText = `height:${h}px;width:80%;border-radius:0 0 2px 2px;`;
-          bar.title = '-' + fmtDollar(t.pnl) + (t.ticker ? ' · ' + t.ticker.replace(/^[^:]+:/, '') : '');
-          bar.addEventListener('mouseenter', e => showTip(e, bar.title));
-          bar.addEventListener('mousemove', moveTip);
-          bar.addEventListener('mouseleave', hideTip);
-          const topSpace = document.createElement('div');
-          topSpace.style.flex = '1';
-          inner.appendChild(topSpace);
-          inner.appendChild(bar);
-        }
+      // Zero line
+      const zl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      zl.setAttribute('x1', PAD.l); zl.setAttribute('x2', W - PAD.r);
+      zl.setAttribute('y1', zeroY); zl.setAttribute('y2', zeroY);
+      zl.setAttribute('stroke', '#ccd9e8'); zl.setAttribute('stroke-width', '1');
+      svg.appendChild(zl);
 
-        barWrap.appendChild(inner);
-        wrap.appendChild(barWrap);
+      asc.forEach((t, i) => {
+        const cx  = PAD.l + step * i + step / 2;
+        const bh  = scale(t.pnl);
+        const x   = cx - barW / 2;
+        const y   = t.pnl >= 0 ? zeroY - bh : zeroY;
+        const col = t.pnl >= 0 ? '#2a7a4a' : '#b03030';
+        const rx  = t.pnl >= 0 ? '2 2 0 0' : '0 0 2 2'; // not used but for reference
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x);
+        rect.setAttribute('y', y);
+        rect.setAttribute('width', barW);
+        rect.setAttribute('height', bh);
+        rect.setAttribute('fill', col);
+        rect.setAttribute('rx', '2');
+        rect.style.cursor = 'default';
+
+        const sym = t.ticker ? t.ticker.replace(/^[^:]+:/, '') : '';
+        const tipText = (t.pnl >= 0 ? '+' : '-') + fmtDollar(t.pnl) + (sym ? ' · ' + sym : '');
+        rect.addEventListener('mouseenter', e => showTip(e, tipText));
+        rect.addEventListener('mousemove', moveTip);
+        rect.addEventListener('mouseleave', hideTip);
+        svg.appendChild(rect);
+
+        // Date label below
+        const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        lbl.setAttribute('x', cx);
+        lbl.setAttribute('y', H - 4);
+        lbl.setAttribute('text-anchor', 'middle');
+        lbl.setAttribute('fill', '#5a6e82');
+        lbl.setAttribute('font-size', '9');
+        lbl.setAttribute('font-family', 'DM Sans, sans-serif');
+        lbl.textContent = t.timeObj ? t.timeObj.toLocaleDateString('en-US', {month:'numeric', day:'numeric'}) : '';
+        svg.appendChild(lbl);
       });
 
-      container.appendChild(wrap);
+      container.appendChild(svg);
     }
 
     // ── TABLE ─────────────────────────────────────────────────
