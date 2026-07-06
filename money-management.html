@@ -392,7 +392,7 @@
           date: dateRaw, dateObj, monthKey,
           description: r['description'] || r['desc'] || '',
           category: cat,
-          type: type === 'income' ? 'income' : 'expense',
+          type: type === 'income' ? 'income' : (type === 'transfer' ? 'transfer' : 'expense'),
           amount: Math.abs(amount),
           notes: r['notes'] || '',
         };
