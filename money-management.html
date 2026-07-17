@@ -134,6 +134,7 @@
     .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 500; background: #e8f0f9; color: var(--accent); }
     .pnl-pos { color: #2a7a4a; font-weight: 600; }
     .pnl-neg { color: #b03030; font-weight: 600; }
+    .pnl-be  { color: var(--muted); font-weight: 600; }
     .dir-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
     .dir-long  { background: #e8f5ee; color: #2a7a4a; }
     .dir-short { background: #fdecea; color: #b03030; }
@@ -573,6 +574,7 @@
     // TRADING
     // ══════════════════════════════════════════════════
     const TRADING_KEY = 'nc_trading_csv_url';
+    const BE_THRESHOLD = 50; // trades within ±$50 are breakeven
     let allTrades = [];
     let tSortCol  = 'time';
     let tSortDir  = -1;
@@ -676,9 +678,11 @@
       const curBal   = asc[asc.length-1]?.balanceAfter || 0;
       const totalPnL = allTrades.reduce((s,t)=>s+t.pnl,0);
       const pct      = startBal ? (totalPnL/startBal)*100 : 0;
-      const wins     = allTrades.filter(t=>t.pnl>0);
-      const losses   = allTrades.filter(t=>t.pnl<0);
-      const winRate  = allTrades.length ? (wins.length/allTrades.length)*100 : 0;
+      const wins      = allTrades.filter(t => t.pnl > BE_THRESHOLD);
+      const losses    = allTrades.filter(t => t.pnl < -BE_THRESHOLD);
+      const breakeven = allTrades.filter(t => Math.abs(t.pnl) <= BE_THRESHOLD);
+      const decided   = wins.length + losses.length;
+      const winRate   = decided ? (wins.length / decided) * 100 : 0;
       const avgPnL   = allTrades.length ? totalPnL/allTrades.length : 0;
       const best     = allTrades.length ? allTrades.reduce((m,t)=>t.pnl>m.pnl?t:m) : null;
       const worst    = allTrades.length ? allTrades.reduce((m,t)=>t.pnl<m.pnl?t:m) : null;
@@ -687,7 +691,7 @@
       document.getElementById('t-pnl').textContent      = (totalPnL>=0?'+':'') + fmtDollar(totalPnL);
       document.getElementById('t-pnl-pct').textContent  = (pct>=0?'+':'') + pct.toFixed(2)+'%';
       document.getElementById('t-winrate').textContent  = winRate.toFixed(0)+'%';
-      document.getElementById('t-wl').textContent       = wins.length+'W / '+losses.length+'L';
+      document.getElementById('t-wl').textContent       = wins.length+'W / '+losses.length+'L'+(breakeven.length?' / '+breakeven.length+'B':'');
       document.getElementById('t-avg').textContent      = (avgPnL>=0?'+':'') + fmtDollar(avgPnL);
       document.getElementById('t-best').textContent     = best  ? '+'+fmtDollar(best.pnl)  : '—';
       document.getElementById('t-best-sub').textContent = best?.ticker||'';
@@ -719,7 +723,8 @@
       asc.forEach((t,i) => {
         const x=toX(i+1), y=toY(t.balanceAfter);
         const sym = t.ticker ? t.ticker.replace(/^[^:]+:/,'') : '';
-        const circle = svgEl('circle',{cx:x,cy:y,r:'4',fill:t.pnl>=0?'#2a7a4a':'#b03030',stroke:'#fff','stroke-width':'1.5',style:'cursor:default'});
+        const dotColor = Math.abs(t.pnl) <= BE_THRESHOLD ? '#a0a8b0' : (t.pnl >= 0 ? '#2a7a4a' : '#b03030');
+        const circle = svgEl('circle',{cx:x,cy:y,r:'4',fill:dotColor,stroke:'#fff','stroke-width':'1.5',style:'cursor:default'});
         circle.addEventListener('mouseenter', e=>showTip(e,(t.pnl>=0?'+':'-')+fmtDollar(t.pnl)+(sym?' · '+sym:'')+(t.contracts?' ('+t.contracts+' ct)':'')+' — '+fmtDate(t.timeObj)));
         circle.addEventListener('mousemove', moveTip);
         circle.addEventListener('mouseleave', hideTip);
@@ -761,7 +766,7 @@
       asc.forEach((t,i) => {
         const cx=PAD.l+step*i+step/2, bh=scale(t.pnl), x=cx-barW/2;
         const y   = t.pnl>=0 ? zeroY-bh : zeroY;
-        const col = t.pnl>=0 ? '#2a7a4a' : '#b03030';
+        const col = Math.abs(t.pnl) <= BE_THRESHOLD ? '#a0a8b0' : (t.pnl > 0 ? '#2a7a4a' : '#b03030');
         const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
         rect.setAttribute('x',x); rect.setAttribute('y',y);
         rect.setAttribute('width',barW); rect.setAttribute('height',bh);
@@ -801,7 +806,7 @@
           <td style="text-align:right;color:var(--muted);font-size:0.78rem">${t.entryPrice!=null?fmtPrice(t.entryPrice):'—'}</td>
           <td style="text-align:right;color:var(--muted);font-size:0.78rem">${t.closePrice!=null?fmtPrice(t.closePrice):'—'}</td>
           <td style="text-align:right">${fmtDollar(t.balanceAfter)}</td>
-          <td style="text-align:right" class="${t.pnl>=0?'pnl-pos':'pnl-neg'}">${(t.pnl>=0?'+':'')+fmtDollar(t.pnl)}</td>
+          <td style="text-align:right" class="${Math.abs(t.pnl)<=BE_THRESHOLD?'pnl-be':(t.pnl>=0?'pnl-pos':'pnl-neg')}">${(t.pnl>=0?'+':'')+fmtDollar(t.pnl)}</td>
           <td style="color:var(--muted);font-size:0.75rem">${esc(t.notes)}</td>`;
         tbody.appendChild(tr);
       });
