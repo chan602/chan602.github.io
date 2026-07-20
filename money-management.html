@@ -626,14 +626,15 @@
       const d = new Date(str); return isNaN(d) ? null : d;
     }
 
+    const STARTING_CAPITAL = 100000;
+
     function parseTrades(data) {
-      return data.map(row => {
+      // Parse each row — ignore balance columns, compute running balance from STARTING_CAPITAL
+      const parsed = data.map(row => {
         const r = {};
         Object.keys(row).forEach(k => { r[k.toLowerCase().trim().replace(/\s+/g,' ')] = (row[k]||'').trim(); });
         const timeRaw  = r['time'] || r['date'] || '';
-        const cleanNum = s => s.replace(/[$,]/g,'').replace(/−/g,'-');
-        const balBefore = parseFloat(cleanNum(r['balance before']||r['balance_before']||'0')) || 0;
-        const balAfter  = parseFloat(cleanNum(r['balance after'] ||r['balance_after'] ||'0')) || 0;
+        const cleanNum = s => s.replace(/[$,USD]/g,'').replace(/−/g,'-');
         const pnl       = parseFloat(cleanNum(r['realized pnl (value)']||r['pnl']||r['realized pnl']||r['profit']||'0')) || 0;
         const actionRaw = r['action'] || '';
         const notes     = r['notes'] || r['note'] || '';
@@ -648,9 +649,18 @@
         const contracts  = unitsMatch   ? parseFloat(unitsMatch[1])    : null;
         const entryPrice = entryPxMatch ? parseFloat(entryPxMatch[1])  : null;
         const timeObj    = parseTradeDate(timeRaw);
-        return { timeRaw, timeObj, balanceBefore:balBefore, balanceAfter:balAfter, pnl,
-                 ticker, direction, closePrice, contracts, entryPrice, notes, actionRaw };
-      }).filter(t => t.timeObj && !isNaN(t.timeObj) && (t.balanceBefore || t.balanceAfter || t.pnl));
+        return { timeRaw, timeObj, pnl, ticker, direction, closePrice, contracts, entryPrice, notes, actionRaw };
+      }).filter(t => t.timeObj && !isNaN(t.timeObj) && t.pnl !== 0);
+
+      // Sort chronologically and compute synthetic running balance from STARTING_CAPITAL
+      parsed.sort((a, b) => a.timeObj - b.timeObj);
+      let running = STARTING_CAPITAL;
+      parsed.forEach(t => {
+        t.balanceBefore = running;
+        running += t.pnl;
+        t.balanceAfter = running;
+      });
+      return parsed;
     }
 
     function tSorted(trades) {
@@ -674,10 +684,10 @@
 
     function renderTradeSummary() {
       const asc      = [...allTrades].sort((a,b) => a.timeObj - b.timeObj);
-      const startBal = asc[0]?.balanceBefore || 0;
-      const curBal   = asc[asc.length-1]?.balanceAfter || 0;
+      const startBal = STARTING_CAPITAL;
+      const curBal   = asc.length ? asc[asc.length-1].balanceAfter : STARTING_CAPITAL;
       const totalPnL = allTrades.reduce((s,t)=>s+t.pnl,0);
-      const pct      = startBal ? (totalPnL/startBal)*100 : 0;
+      const pct      = (totalPnL/startBal)*100;
       const wins      = allTrades.filter(t => t.pnl > BE_THRESHOLD);
       const losses    = allTrades.filter(t => t.pnl < -BE_THRESHOLD);
       const breakeven = allTrades.filter(t => Math.abs(t.pnl) <= BE_THRESHOLD);
