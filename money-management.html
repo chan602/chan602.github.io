@@ -758,7 +758,7 @@
       svg.appendChild(svgEl('line',{x1:PAD.l,y1:toY(points[0]),x2:W-PAD.r,y2:toY(points[0]),stroke:'#ccd9e8','stroke-width':'1','stroke-dasharray':'4 3'}));
       const polyPts = points.map((v,i)=>toX(i)+','+toY(v)).join(' ');
       const areaPts = PAD.l+','+(H-PAD.b)+' '+polyPts+' '+toX(points.length-1)+','+(H-PAD.b);
-      const lastPnL = allTrades.reduce((s,t)=>s+t.pnl,0);
+      const lastPnL = asc.reduce((s,t)=>s+t.pnl,0);
       svg.appendChild(svgEl('polygon',{points:areaPts,fill:lastPnL>=0?'#e8f5ee':'#fdecea',opacity:'0.5'}));
       svg.appendChild(svgEl('polyline',{points:polyPts,fill:'none',stroke:lastPnL>=0?'#2a7a4a':'#b03030','stroke-width':'2','stroke-linejoin':'round','stroke-linecap':'round'}));
       asc.forEach((t,i) => {
