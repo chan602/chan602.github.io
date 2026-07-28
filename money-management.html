@@ -819,11 +819,17 @@
         rect.addEventListener('mousemove', moveTip);
         rect.addEventListener('mouseleave', hideTip);
         svg.appendChild(rect);
+      });
+      // 3 date labels: first, middle, last
+      [[0,'start'], [Math.floor((asc.length-1)/2),'middle'], [asc.length-1,'end']].forEach(([idx, pos]) => {
+        if (!asc[idx]?.timeObj) return;
+        const cx = PAD.l + step*idx + step/2;
+        const anchor = pos==='start'?'start':pos==='end'?'end':'middle';
         const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
-        lbl.setAttribute('x',cx); lbl.setAttribute('y',H-4);
-        lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('fill','#5a6e82');
+        lbl.setAttribute('x', cx); lbl.setAttribute('y', H-4);
+        lbl.setAttribute('text-anchor', anchor); lbl.setAttribute('fill','#5a6e82');
         lbl.setAttribute('font-size','9'); lbl.setAttribute('font-family','DM Sans, sans-serif');
-        lbl.textContent = t.timeObj ? t.timeObj.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}) : '';
+        lbl.textContent = asc[idx].timeObj.toLocaleDateString('en-US',{month:'numeric',day:'numeric'});
         svg.appendChild(lbl);
       });
       container.appendChild(svg);
