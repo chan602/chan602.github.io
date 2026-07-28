@@ -748,13 +748,27 @@
       // Start point: balance before the first visible trade
       const startPoint = asc[0].balanceBefore;
       const points = [startPoint, ...asc.map(t=>t.balanceAfter)];
-      const W=700, H=180, PAD={t:16,r:10,b:28,l:10};
+      const W=700, H=180, PAD={t:16,r:10,b:28,l:62};
       const plotW=W-PAD.l-PAD.r, plotH=H-PAD.t-PAD.b;
       const mn=Math.min(...points), mx=Math.max(...points), rng=(mx-mn)||1;
-      const lo=mn-rng*0.05, hi=mx+rng*0.05, r=hi-lo;
+      const lo=mn-rng*0.08, hi=mx+rng*0.08, r=hi-lo;
       const xStep = points.length>1 ? plotW/(points.length-1) : plotW;
       const toX = i => PAD.l+i*xStep;
       const toY = v => PAD.t+plotH-((v-lo)/r)*plotH;
+      // Y-axis: pick ~4 nice ticks
+      const niceStep = v => { const p=Math.pow(10,Math.floor(Math.log10(v))); const f=v/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; };
+      const tickStep = niceStep(r/3);
+      const tickStart = Math.ceil(lo/tickStep)*tickStep;
+      const ticks = [];
+      for (let t=tickStart; t<=hi; t+=tickStep) ticks.push(t);
+      const fmtAxis = v => { const abs=Math.abs(v); const s=v<0?'-':''; if(abs>=1000) return s+'$'+(abs/1000).toFixed(abs%1000===0?0:1)+'k'; return s+'$'+abs.toFixed(0); };
+      ticks.forEach(tv => {
+        const y = toY(tv);
+        svg.appendChild(svgEl('line',{x1:PAD.l-4,y1:y,x2:W-PAD.r,y2:y,stroke:'#e0e8f0','stroke-width':'1'}));
+        const lbl = svgEl('text',{x:PAD.l-8,y:y+4,'text-anchor':'end',fill:'#5a6e82','font-size':'10','font-family':'DM Sans, sans-serif'});
+        lbl.textContent = fmtAxis(tv);
+        svg.appendChild(lbl);
+      });
       svg.appendChild(svgEl('line',{x1:PAD.l,y1:toY(points[0]),x2:W-PAD.r,y2:toY(points[0]),stroke:'#ccd9e8','stroke-width':'1','stroke-dasharray':'4 3'}));
       const polyPts = points.map((v,i)=>toX(i)+','+toY(v)).join(' ');
       const areaPts = PAD.l+','+(H-PAD.b)+' '+polyPts+' '+toX(points.length-1)+','+(H-PAD.b);
