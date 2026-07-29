@@ -161,6 +161,20 @@
     /* ── EMPTY STATE ── */
     .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 0.88rem; }
     .empty-state strong { display: block; font-size: 1rem; color: var(--ink); margin-bottom: 6px; }
+
+    /* ── ABOUT BOX ── */
+    .about-box {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md);
+      padding: 16px 20px; margin-bottom: 20px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .about-box svg { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+    .about-box p { font-size: 0.83rem; color: var(--muted); line-height: 1.6; margin: 0; }
+    .about-box code {
+      font-family: 'DM Mono', 'Fira Mono', monospace; font-size: 0.78rem;
+      background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+      padding: 1px 5px; color: var(--ink);
+    }
   </style>
 </head>
 <body class="canvas-page">
@@ -191,6 +205,13 @@
         <input id="budget-url-input" class="config-input" type="text" placeholder="Paste your budget Google Sheets CSV link…"/>
         <button class="load-btn" id="budget-load-btn">Load</button>
         <span class="load-status" id="budget-load-status"></span>
+      </div>
+
+      <div class="about-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="7"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor"/>
+        </svg>
+        <p>I built this dashboard to better visualize my expenses and budget. To try it yourself: format your transactions in Google Sheets with columns <code>Date</code> <code>Description</code> <code>Amount</code> <code>Category</code> <code>Type</code> <code>Notes</code>, publish the sheet as a CSV (File → Share → Publish to web), and paste the URL above.</p>
       </div>
 
       <div class="filter-row">
@@ -255,6 +276,13 @@
         <input id="trading-url-input" class="config-input" type="text" placeholder="Paste your trading Google Sheets CSV link…"/>
         <button class="load-btn" id="trading-load-btn">Load</button>
         <span class="load-status" id="trading-load-status"></span>
+      </div>
+
+      <div class="about-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="7"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor"/>
+        </svg>
+        <p>I became interested in futures trading and began paper trading live on 5/1/26. I built this dashboard to visualize my PnL over time. To try it yourself: export your TradingView balance history, paste it into Google Sheets with headers <code>Time</code> <code>Balance before</code> <code>Balance after</code> <code>Realized PnL (value)</code> <code>Action</code>, publish as CSV, and paste the URL above.</p>
       </div>
 
       <div class="summary-grid">
